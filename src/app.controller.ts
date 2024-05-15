@@ -1,12 +1,17 @@
 import { Controller, Get } from '@nestjs/common';
-import { AppService } from './app.service';
+import { ConfigService } from "@nestjs/config";
+import { ApiOperation, ApiResponse} from '@nestjs/swagger'
 
-@Controller()
+@Controller('')
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+    constructor(private readonly configService: ConfigService) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
+    @Get()
+    @ApiOperation({ summary: 'default endpoint', description: 'welcome page / description for server and client application' })
+    @ApiResponse({ status: 200, description: 'Success' })    
+    @ApiResponse({ status: 304, description: 'Cached / no need to be modified' })
+    home(){
+        const name = this.configService.get<string>("APP_NAME");
+        return `Welcome to my ${name}!`
+    }   
 }
