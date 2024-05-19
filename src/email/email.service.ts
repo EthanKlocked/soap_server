@@ -1,7 +1,7 @@
 import { Injectable, NotImplementedException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from "@nestjs/config";
-import { EmailRequestDto } from './dto/email.request.dto';
+import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 
 @Injectable()
 export class EmailService {
@@ -13,8 +13,8 @@ export class EmailService {
 			port: 587,
 			secure: false,
 			auth: {
-					user : this.configService.get<string>("MAIL_ID"),
-					pass : this.configService.get<string>("MAIL_PASSWORD"),
+				user : this.configService.get<string>("MAIL_ID"),
+				pass : this.configService.get<string>("MAIL_PASSWORD"),
 			}
 		});
 	}
@@ -29,7 +29,7 @@ export class EmailService {
 			});
 			return 'Success';
 		}catch(e){
-				throw new NotImplementedException(e.message); 
+			throw new NotImplementedException(e.message); 
 		}
 	}
 }
