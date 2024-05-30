@@ -15,7 +15,7 @@ export class User extends Document {
     })
     @IsEmail()
     @IsNotEmpty()
-    mail: string;
+    email: string;
 
     @Prop({
         required: true,
@@ -37,7 +37,7 @@ export class User extends Document {
 
     readonly readOnlyData: {
         id: string;
-        mail: string;
+        email: string;
         name: string;
     };
 }
@@ -47,7 +47,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 UserSchema.virtual('readOnlyData').get(function (this: User) {
     return {
         id: this.id,
-        email: this.mail,
+        email: this.email,
         name: this.name,
     };
 });

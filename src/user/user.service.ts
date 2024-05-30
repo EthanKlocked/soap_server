@@ -16,7 +16,7 @@ export class UserService {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-        private readonly mailService: EmailService
+        private readonly emailService: EmailService
     ) {}
 
     async findAll(){
@@ -48,20 +48,20 @@ export class UserService {
 
     async signUp(body: UserRequestDto) {
         try{
-            const { mail, name, password } = body;
+            const { email, name, password } = body;
 
             //check time expired 
-            const timePass = await this.cacheManager.get(body.mail);
+            const timePass = await this.cacheManager.get(body.email);
             if(!timePass || timePass != 'passed') throw new RequestTimeoutException('not verified or timed out');
     
             //check user duplicated
-            const isUserExist = await this.userModel.exists({ mail });
+            const isUserExist = await this.userModel.exists({ email });
             if (isUserExist) throw new ConflictException('The user already exists');
     
             //join start
             const hashedPassword = await bcrypt.hash(password, 10);
             const user = await this.userModel.create({
-                mail,
+                email,
                 name,
                 password: hashedPassword,
             });
@@ -78,7 +78,7 @@ export class UserService {
             body.subject = 'verifcation number';
             body.content = verifyToken;
             await this.cacheManager.set(body.email, verifyToken, { ttl: limitSeconds } as any);
-            this.mailService.sendMail(body);
+            this.emailService.sendMail(body);
             return limitSeconds;
         }catch(e){
             throw new NotImplementedException(e.message); 
@@ -87,11 +87,11 @@ export class UserService {
 
     async verify(body: UserVerifyDto){        
         try{
-            const targetCode = await this.cacheManager.get(body.mail);
+            const targetCode = await this.cacheManager.get(body.email);
             if(targetCode === undefined) throw new RequestTimeoutException('not sent or timed out');
             if(body.verificationCode === targetCode){
                 const limitSeconds : number = 300;
-                await this.cacheManager.set(body.mail, 'passed',{ ttl: limitSeconds } as any); //limited time session for 5mins in joining process 
+                await this.cacheManager.set(body.email, 'passed',{ ttl: limitSeconds } as any); //limited time session for 5mins in joining process 
                 return 'Success';
             } 
             else throw new UnauthorizedException('Invalid code');

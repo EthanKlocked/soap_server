@@ -12,7 +12,7 @@ export class AuthService {
     ) {}
 
     async validateUser(body : UserLoginDto){
-        const option : object = {'mail' : body.mail}
+        const option : object = {'email' : body.email}
 		const user = await this.userService.findOne(option);        
 		if (!user) return null;
         if (!await compare(body.password, user.password)) return null;
@@ -20,7 +20,7 @@ export class AuthService {
 	}
     
     async issueToken(user: any){
-		const payload = { userName: user.mail, sub: user.id };
+		const payload = { userEmail: user.email, sub: user.id };
 		return { accessToken: this.jwtService.sign(payload) };
     }
 }

@@ -4,8 +4,8 @@ import { ApiProperty } from "@nestjs/swagger";
 export class UserRequestDto {
     @IsEmail()
     @IsNotEmpty()
-    @ApiProperty({ description: 'mail', example: 'test@test.com' })  
-    mail: string;
+    @ApiProperty({ description: 'email', example: 'test@test.com' })  
+    email: string;
 
     @IsString()
     @IsNotEmpty()

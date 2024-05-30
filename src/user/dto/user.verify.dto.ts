@@ -4,8 +4,8 @@ import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
 export class UserVerifyDto {
 	@IsEmail()
 	@IsNotEmpty()
-	@ApiProperty({ description: 'mail', example: 'test@test.com' })  
-	mail: string;
+	@ApiProperty({ description: 'email', example: 'test@test.com' })  
+	email: string;
 
 	@IsString()
 	@IsNotEmpty()
