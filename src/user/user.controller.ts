@@ -82,7 +82,9 @@ export class UserController {
     @ApiResponse({ status: 401, description: 'Invalid e-mail or password' })    
 	async login(@Request() req, @Res({ passthrough: true}) response) {
 		const accessToken = req.user.accessToken;
-		await response.cookie('Authorization', accessToken);
+        response.cookie('access_token', accessToken, {
+            httpOnly: true, //prevent js control in browser
+        });
 		return "success";
 	}    
 }    
