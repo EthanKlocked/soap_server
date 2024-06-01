@@ -1,4 +1,12 @@
-import { Inject, Injectable, NotImplementedException, UnauthorizedException, RequestTimeoutException, ConflictException } from '@nestjs/common';
+import { 
+    Inject, 
+    Injectable, 
+    NotImplementedException, 
+    UnauthorizedException, 
+    RequestTimeoutException, 
+    ConflictException, 
+    OnModuleInit 
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '@src/user/schema/user.schema';
 import { Model } from 'mongoose';
@@ -11,13 +19,22 @@ import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from './dto/user.verify.dto';
 import * as bcrypt from 'bcrypt';
 
+//onModuleInit interface and addNewField method need to be activated for case new columns added 
 @Injectable()
-export class UserService {
+export class UserService /*implements OnModuleInit*/ {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
         private readonly emailService: EmailService
     ) {}
+    /* ######### OPTIONAL #########
+    async onModuleInit() {
+        await this.addNewField();
+    }
+    async addNewField() {
+        await this.userModel.updateMany({ refresh: { $exists: false } }, { $set: { refresh: null } });
+    } 
+    */   
 
     async findAll(){
         try{
@@ -98,6 +115,5 @@ export class UserService {
         }catch(e){
             throw new NotImplementedException(e.message);             
         }
-
     }
 }

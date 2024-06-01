@@ -5,6 +5,7 @@ import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse} from '@nestjs/swagger'
 import { LocalAuthGuard } from '@src/auth/guard/local.guard';
+import { RefreshGuard } from '@src/auth/guard/refresh.guard';
 import { UserLoginDto } from '@src/user/dto/user.login.dto';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
@@ -30,6 +31,8 @@ export class UserController {
 	@Get('profile')
     @ApiOperation({ summary: 'Get user info', description: 'get profile information from accessToken inserted in cookies' })
     @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 401, description: 'Empty / Invalid token' })    
+    @ApiResponse({ status: 408, description: 'Token has expired' })        
 	async getProfile(@Request() req) {
 		return req.user;
 	}
@@ -81,10 +84,31 @@ export class UserController {
     @ApiResponse({ status: 201, description: 'Success' })
     @ApiResponse({ status: 401, description: 'Invalid e-mail or password' })    
 	async login(@Request() req, @Res({ passthrough: true}) response) {
-		const accessToken = req.user.accessToken;
-        response.cookie('access_token', accessToken, {
-            httpOnly: true, //prevent js control in browser
-        });
+		const accessToken = req.user.access;
+        const refreshToken = req.user.refresh;
+        response.cookie('access_token', accessToken, { httpOnly: true });
+        response.cookie('refresh_token', refreshToken, { httpOnly: true });
 		return "success";
 	}    
+
+    @UseGuards(RefreshGuard)
+	@Post('refresh')
+    @ApiOperation({ summary: 'Refresh', description: 'Refresh access token in case previous access token is expired.' })
+    @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 401, description: 'Invalid refresh token' })    
+	async refresh(@Request() req, @Res({ passthrough: true}) response) {
+		const accessToken = req.user.access;
+        const refreshToken = req.user.refresh;
+        response.cookie('access_token', accessToken, { httpOnly: true });
+        response.cookie('refresh_token', refreshToken, { httpOnly: true });
+		return "success";
+	}        
+
+    @Post('logout')
+    @ApiResponse({ status: 201, description: 'Success' })
+    async logout(@Res({ passthrough: true}) response) {
+        response.clearCookie('access_token');
+        response.clearCookie('refresh_token');
+        return "success";
+    }    
 }    

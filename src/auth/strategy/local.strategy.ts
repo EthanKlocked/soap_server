@@ -14,6 +14,9 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
 		if (!user) {
 			throw new UnauthorizedException('invalid e-mail or password');
 		}
-		return await this.authService.issueToken(user);
+		const authUser = {id : user.id, email : user.email}
+		const accessToken = await this.authService.issueAccessToken(authUser);
+		const refreshToken = await this.authService.issueRefreshToken(authUser);
+		return {access : accessToken, refresh : refreshToken}
 	}
 }
