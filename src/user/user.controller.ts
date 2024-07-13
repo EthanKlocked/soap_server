@@ -32,7 +32,7 @@ export class UserController {
     @ApiOperation({ summary: 'Get user info', description: 'get profile information from accessToken inserted in cookies' })
     @ApiResponse({ status: 200, description: 'Success' })
     @ApiResponse({ status: 401, description: 'Empty / Invalid token' })    
-    @ApiResponse({ status: 408, description: 'Token has expired' })        
+    @ApiResponse({ status: 410, description: 'Token has expired' })        
 	async getProfile(@Request() req) {
 		return req.user;
 	}
