@@ -1,4 +1,4 @@
-# [ivory_box_server]
+# [soap_server]
 
 BE nestjs server code for mobile service which is for studying temporarily..
 

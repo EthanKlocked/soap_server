@@ -18,7 +18,7 @@ async function bootstrap() {
 
 	const config = new DocumentBuilder()
 		.setTitle('Nest API')
-		.setDescription('Ivory API document made by Ethan Kim')
+		.setDescription('Soap API document made by Ethan Kim')
 		.setVersion('1.0')
 		.build();	
 	const document = SwaggerModule.createDocument(app, config);

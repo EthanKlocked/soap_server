@@ -22,7 +22,7 @@ export class EmailService {
 	async sendMail(body: EmailRequestDto) {
 		try{
 			await this.transporter.sendMail({
-				from : 'Email from @ivory.com <ethanklocked@gmail.com>',
+				from : 'Email from @soap.com <ethanklocked@gmail.com>',
 				to : body.email,
 				subject : body.subject,
 				text : body.content
