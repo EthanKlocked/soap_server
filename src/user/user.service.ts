@@ -17,7 +17,7 @@ import { generateRandomNumber } from '@src/lib/common';
 import { EmailService } from 'src/email/email.service';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from './dto/user.verify.dto';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 //onModuleInit interface and addNewField method need to be activated for case new columns added 
 @Injectable()
