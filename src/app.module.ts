@@ -9,6 +9,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { MongooseModule } from '@nestjs/mongoose';
 import { cacheConfig } from '@src/config/cache.config';
 import { dbConfig } from '@src/config/db.config';
+import { DiaryModule } from './diary/diary.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { dbConfig } from '@src/config/db.config';
     UserModule,
     EmailModule,
     AuthModule,
+    DiaryModule,
   ],
   controllers: [AppController],
   providers: [AppService],
