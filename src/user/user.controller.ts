@@ -9,13 +9,14 @@ import {
   Session,
 } from '@nestjs/common';
 import { UserService } from '@src/user/user.service';
-import { UserRequestDto } from '@src/user/dto/user.request.dto';
+import { UserSignupDto } from '@src/user/dto/user.signup.dto';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { LocalAuthGuard } from '@src/auth/guard/local.guard';
 import { RefreshGuard } from '@src/auth/guard/refresh.guard';
 import { UserLoginDto } from '@src/user/dto/user.login.dto';
+import { UserUpdateDto } from '@src/user/dto/user.update.dto';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 
