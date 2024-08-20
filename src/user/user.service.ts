@@ -5,12 +5,15 @@ import {
     UnauthorizedException, 
     RequestTimeoutException, 
     ConflictException, 
+    NotFoundException,
+    HttpException,
     OnModuleInit 
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '@src/user/schema/user.schema';
 import { Model } from 'mongoose';
-import { UserRequestDto } from '@src/user/dto/user.request.dto';
+import { UserSignupDto } from '@src/user/dto/user.signup.dto';
+import { UserUpdateDto } from '@src/user/dto/user.update.dto';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { generateRandomNumber } from '@src/lib/common';
@@ -63,7 +66,7 @@ export class UserService /*implements OnModuleInit*/ {
         }        
     }
 
-    async signUp(body: UserRequestDto) {
+    async signUp(body: UserSignupDto) {
         try{
             const { email, name, password } = body;
 
@@ -84,9 +87,33 @@ export class UserService /*implements OnModuleInit*/ {
             });
             return user.readOnlyData;
         }catch(e){
+            if (e instanceof HttpException) throw e; //controlled
             throw new NotImplementedException(e.message);            
         }
     }
+
+    async update(userId: string, updateInfo: UserUpdateDto): Promise<User> {
+        try{        
+            //check fields
+            const updateFields: Partial<User> = {};
+            if (updateInfo.name) updateFields.name = updateInfo.name;
+            if (updateInfo.alarm !== undefined) updateFields.alarm = updateInfo.alarm;
+            if (updateInfo.imgUrl) updateFields.imgUrl = updateInfo.imgUrl;
+        
+            //update start 
+            const updatedUser = await this.userModel.findByIdAndUpdate(
+                userId,
+                { $set: updateFields },
+                { new: true, runValidators: true }
+            );        
+            if (!updatedUser) throw new NotFoundException('User not found');
+            return updatedUser;
+        } catch(e){
+            if(e instanceof HttpException) throw e; //controlled
+            throw new NotImplementedException(e.message);
+        }
+    }
+
 
     async sendVerification(body: EmailRequestDto) {
         try{
@@ -113,7 +140,21 @@ export class UserService /*implements OnModuleInit*/ {
             } 
             else throw new UnauthorizedException('Invalid code');
         }catch(e){
+            if (e instanceof HttpException) throw e; //controlled
             throw new NotImplementedException(e.message);             
+        }
+    }
+
+    async delete(userId: string) {
+        try {
+            const deletedUser = await this.userModel.findByIdAndDelete(userId);
+            if (!deletedUser) {
+                throw new NotFoundException(`User with ID ${userId} not found`);
+            }
+            return deletedUser.readOnlyData;
+        } catch (e) {
+            if(e instanceof HttpException) throw e; //controlled
+            throw new NotImplementedException(e.message);
         }
     }
 }

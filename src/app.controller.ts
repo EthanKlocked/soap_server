@@ -12,6 +12,6 @@ export class AppController {
     @ApiResponse({ status: 304, description: 'Cached / no need to be modified' })
     home(){
         const name = this.configService.get<string>("APP_NAME");
-        return `Welcome to my ${name}!`
+        return `Welcome to my ${name}!`;
     }   
 }

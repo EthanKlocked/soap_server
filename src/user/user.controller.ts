@@ -1,12 +1,13 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Res, Session } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, Res, Session, Delete, Patch } from '@nestjs/common';
 import { UserService } from '@src/user/user.service';
-import { UserRequestDto } from '@src/user/dto/user.request.dto';
+import { UserSignupDto } from '@src/user/dto/user.signup.dto';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse} from '@nestjs/swagger'
 import { LocalAuthGuard } from '@src/auth/guard/local.guard';
 import { RefreshGuard } from '@src/auth/guard/refresh.guard';
 import { UserLoginDto } from '@src/user/dto/user.login.dto';
+import { UserUpdateDto } from '@src/user/dto/user.update.dto';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 
@@ -27,11 +28,14 @@ export class UserController {
         return await this.userService.findAll();
     }
 
+    @UseGuards(ApiGuard)
     @UseGuards(JwtAuthGuard)
 	@Get('profile')
     @ApiOperation({ summary: 'Get user info', description: 'get profile information from accessToken inserted in cookies' })
     @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
     @ApiResponse({ status: 401, description: 'Empty / Invalid token' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
     @ApiResponse({ status: 410, description: 'Token has expired' })        
 	async getProfile(@Request() req) {
 		return req.user;
@@ -40,16 +44,31 @@ export class UserController {
     @UseGuards(ApiGuard)
     @Post()
     @ApiOperation({ summary: 'Add new user', description: 'create new user data in server database' })
-    @ApiBody({ type: UserRequestDto })
+    @ApiBody({ type: UserSignupDto })
     @ApiResponse({ status: 201, description: 'Success' })
     @ApiResponse({ status: 400, description: 'Request without API KEY' })    
     @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
     @ApiResponse({ status: 408, description: 'Not verified or time expired' })    
     @ApiResponse({ status: 409, description: 'The user already exists' })
     @ApiResponse({ status: 501, description: 'Server Error' })
-    async signUp(@Body() body: UserRequestDto) {
+    async signUp(@Body() body: UserSignupDto) {
         return await this.userService.signUp(body);
     }
+
+    @UseGuards(ApiGuard)
+    @UseGuards(JwtAuthGuard)
+    @Patch()
+    @ApiOperation({ summary: 'Update user info', description: 'update user info in server database' })
+    @ApiBody({ type: UserUpdateDto })
+    @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+    @ApiResponse({ status: 408, description: 'Not verified or time expired' })    
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async update(@Request() req, @Body() updateInfo: UserUpdateDto) {
+        const targetId : string = req.user.id
+        return await this.userService.update(targetId, updateInfo);
+    }    
 
     @UseGuards(ApiGuard)
     @Post('email')
@@ -77,11 +96,14 @@ export class UserController {
         return await this.userService.verify(body);
     }
 
+    @UseGuards(ApiGuard)
     @UseGuards(LocalAuthGuard)
 	@Post('login')
     @ApiOperation({ summary: 'Login', description: 'Login with body information including e-mail and password and issue accessToken if request would be validate.' })
     @ApiBody({ type: UserLoginDto })
     @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
     @ApiResponse({ status: 401, description: 'Invalid e-mail or password' })    
 	async login(@Request() req, @Res({ passthrough: true}) response) {
 		const accessToken = req.user.access;
@@ -91,11 +113,14 @@ export class UserController {
 		return "success";
 	}    
 
+    @UseGuards(ApiGuard)
     @UseGuards(RefreshGuard)
 	@Post('refresh')
     @ApiOperation({ summary: 'Refresh', description: 'Refresh access token in case previous access token is expired.' })
     @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
     @ApiResponse({ status: 401, description: 'Invalid refresh token' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
 	async refresh(@Request() req, @Res({ passthrough: true}) response) {
 		const accessToken = req.user.access;
         const refreshToken = req.user.refresh;
@@ -104,11 +129,30 @@ export class UserController {
 		return "success";
 	}        
 
+    @UseGuards(ApiGuard)
     @Post('logout')
     @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
     async logout(@Res({ passthrough: true}) response) {
         response.clearCookie('access_token');
         response.clearCookie('refresh_token');
         return "success";
+    }    
+
+    @UseGuards(ApiGuard)
+    @UseGuards(JwtAuthGuard)
+    @Delete('delete')
+    @ApiOperation({ summary: 'Delete', description: 'Delete a user by their ID from token validated' })
+    @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 401, description: 'Empty / Invalid token' })  
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })      
+    @ApiResponse({ status: 410, description: 'Token has expired' })      
+    @ApiResponse({ status: 404, description: 'User not found' })          
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async delete(@Request() req) {
+        const targetId : string = req.user.id
+        return await this.userService.delete(targetId);
     }    
 }    

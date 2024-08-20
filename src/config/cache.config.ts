@@ -7,9 +7,6 @@ export const cacheConfig = {
 	inject: [ConfigService],
 	isGlobal:true,
 	useFactory: (configService: ConfigService) => {
-		console.log('REDIS_HOST:', configService.get('REDIS_HOST'));
-		console.log('REDIS_PORT:', configService.get('REDIS_PORT'));
-		console.log('REDIS_TTL:', configService.get('REDIS_TTL'));
 		const option: CacheModuleOptions = {
 			ttl: configService.get('REDIS_TTL'),
 			store: redisStore,
