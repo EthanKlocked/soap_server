@@ -118,4 +118,52 @@ export class DiaryService {
       throw new InternalServerErrorException(e.message);
     }
   }
+
+  async update(userId: string, id: string, createDiaryDto: CreateDiaryDto) {
+    try {
+      const diary = await this.diaryModel
+        .findOne({ _id: id, user: userId })
+        .exec();
+
+      if (!diary) {
+        throw new NotFoundException('Diary not found');
+      }
+
+      const updatedDiary = await this.diaryModel
+        .findByIdAndUpdate(id, { $set: createDiaryDto }, { new: true })
+        .exec();
+
+      return updatedDiary;
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to update diary');
+    }
+  }
+
+  async delete(userId: string, id: string) {
+    try {
+      const diary = await this.diaryModel
+        .findOne({ _id: id, user: userId })
+        .exec();
+
+      if (!diary) {
+        throw new NotFoundException('Diary not found');
+      }
+
+      const result = await this.diaryModel.findByIdAndDelete(id).exec();
+
+      if (!result) {
+        throw new InternalServerErrorException('Failed to delete diary');
+      }
+
+      return { message: 'Diary successfully deleted' };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to delete diary');
+    }
+  }
 }
