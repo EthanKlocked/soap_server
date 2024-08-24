@@ -7,6 +7,8 @@ import {
   Request,
   Query,
   Param,
+  Patch,
+  Delete,
 } from '@nestjs/common';
 import { ApiResponse } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
@@ -61,5 +63,23 @@ export class DiaryController {
   @ApiResponse({ status: 501, description: 'Server Error' })
   async findOne(@Request() req, @Param('id') id: string) {
     return this.diariesService.findOne(req.user.id, id);
+  }
+
+  @Patch(':id')
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 501, description: 'Server Error' })
+  async update(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() createDiaryDto: CreateDiaryDto,
+  ) {
+    return this.diariesService.update(req.user.id, id, createDiaryDto);
+  }
+
+  @Delete(':id')
+  @ApiResponse({ status: 200, description: 'Success' })
+  @ApiResponse({ status: 501, description: 'Server Error' })
+  async delete(@Request() req, @Param('id') id: string) {
+    return this.diariesService.delete(req.user.id, id);
   }
 }
