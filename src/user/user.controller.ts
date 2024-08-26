@@ -3,7 +3,7 @@ import { UserService } from '@src/user/user.service';
 import { UserSignupDto } from '@src/user/dto/user.signup.dto';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse} from '@nestjs/swagger'
 import { LocalAuthGuard } from '@src/auth/guard/local.guard';
 import { RefreshGuard } from '@src/auth/guard/refresh.guard';
 import { UserLoginDto } from '@src/user/dto/user.login.dto';
@@ -11,24 +11,22 @@ import { UserUpdateDto } from '@src/user/dto/user.update.dto';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 
-@Controller('user')
-@ApiTags('user')
-export class UserController {
-  constructor(private readonly userService: UserService) {}
 
-  @UseGuards(ApiGuard)
-  @Get()
-  @ApiOperation({
-    summary: 'Find Every Users Info',
-    description: 'get every users information for test environment',
-  })
-  @ApiResponse({ status: 200, description: 'Success' })
-  @ApiResponse({ status: 400, description: 'Request without API KEY' })
-  @ApiResponse({ status: 403, description: 'Invalid API KEY' })
-  @ApiResponse({ status: 501, description: 'Server Error' })
-  async findAll() {
-    return await this.userService.findAll();
-  }
+@Controller('user')
+@ApiTags('user') 
+export class UserController {
+    constructor(private readonly userService: UserService) {}
+
+    @UseGuards(ApiGuard)
+    @Get()
+    @ApiOperation({ summary: 'Find Every Users Info', description: 'get every users information for test environment' })
+    @ApiResponse({ status: 200, description: 'Success' })    
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async findAll() {
+        return await this.userService.findAll();
+    }
 
     @UseGuards(ApiGuard)
     @UseGuards(JwtAuthGuard)
@@ -84,23 +82,19 @@ export class UserController {
         return await this.userService.sendVerification(body);
     }
 
-  @UseGuards(ApiGuard)
-  @Post('verify')
-  @ApiOperation({
-    summary: 'Verify digit code',
-    description:
-      'Check if the verificationCode value is same with the code server sent and cached for limited time',
-  })
-  @ApiBody({ type: UserVerifyDto })
-  @ApiResponse({ status: 201, description: 'Success' })
-  @ApiResponse({ status: 400, description: 'Request without API KEY' })
-  @ApiResponse({ status: 403, description: 'Invalid API KEY' })
-  @ApiResponse({ status: 401, description: 'Invalid code' })
-  @ApiResponse({ status: 408, description: 'Not sent or time expired' })
-  @ApiResponse({ status: 501, description: 'Server Error' })
-  async verify(@Body() body: UserVerifyDto) {
-    return await this.userService.verify(body);
-  }
+    @UseGuards(ApiGuard)
+    @Post('verify')
+    @ApiOperation({ summary: 'Verify digit code', description: 'Check if the verificationCode value is same with the code server sent and cached for limited time' })
+    @ApiBody({ type: UserVerifyDto })
+    @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+    @ApiResponse({ status: 401, description: 'Invalid code' })
+    @ApiResponse({ status: 408, description: 'Not sent or time expired' })    
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async verify(@Body() body: UserVerifyDto) {
+        return await this.userService.verify(body);
+    }
 
     @UseGuards(ApiGuard)
     @UseGuards(LocalAuthGuard)

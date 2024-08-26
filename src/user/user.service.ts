@@ -22,58 +22,49 @@ import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from './dto/user.verify.dto';
 import * as bcrypt from 'bcryptjs';
 
-//onModuleInit interface and addNewField method need to be activated for case new columns added
+//onModuleInit interface and addNewField method need to be activated for case new columns added 
 @Injectable()
 export class UserService /*implements OnModuleInit*/ {
-  constructor(
-    @InjectModel(User.name) private readonly userModel: Model<User>,
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-    private readonly emailService: EmailService,
-  ) {}
-  /* ######### OPTIONAL #########
+    constructor(
+        @InjectModel(User.name) private readonly userModel: Model<User>,
+        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+        private readonly emailService: EmailService
+    ) {}
+    /* ######### OPTIONAL #########
     async onModuleInit() {
         await this.addNewField();
     }
     async addNewField() {
         await this.userModel.updateMany({ refresh: { $exists: false } }, { $set: { refresh: null } });
     } 
-    */
+    */   
 
-  async findAll() {
-    try {
-      const users = await this.userModel.find().exec();
-      return users.map((u: User): User['readOnlyData'] => u.readOnlyData);
-    } catch (e) {
-      throw new NotImplementedException(e.message);
+    async findAll(){
+        try{
+            const users = await this.userModel.find().exec();
+            return users.map((u:User) : User['readOnlyData'] => u.readOnlyData);    
+        }catch(e){
+            throw new NotImplementedException(e.message);            
+        }
     }
-  }
 
-  async findOne(option: object = null) {
-    try {
-      const user = await this.userModel.findOne(option);
-      return user;
-    } catch (e) {
-      throw new NotImplementedException(e.message);
+    async findOne(option: object = null){
+        try{
+            const user = await this.userModel.findOne(option);
+            return user;
+        }catch(e){
+            throw new NotImplementedException(e.message);            
+        }
+    }    
+
+    async findById(id:string){
+        try{
+            const user = await this.userModel.findById(id);
+            return user;
+        }catch(e){
+            throw new NotImplementedException(e.message);            
+        }        
     }
-  }
-
-  async findById(id: string) {
-    try {
-      const user = await this.userModel.findById(id);
-      return user;
-    } catch (e) {
-      throw new NotImplementedException(e.message);
-    }
-  }
-
-  async signUp(body: UserRequestDto) {
-    try {
-      const { email, name, password } = body;
-
-      //check time expired
-      const timePass = await this.cacheManager.get(body.email);
-      if (!timePass || timePass != 'passed')
-        throw new RequestTimeoutException('not verified or timed out');
 
     async signUp(body: UserSignupDto) {
         try{
@@ -100,7 +91,6 @@ export class UserService /*implements OnModuleInit*/ {
             throw new NotImplementedException(e.message);            
         }
     }
-  }
 
     async update(userId: string, updateInfo: UserUpdateDto): Promise<User> {
         try{        
@@ -138,7 +128,6 @@ export class UserService /*implements OnModuleInit*/ {
             throw new NotImplementedException(e.message); 
         }
     }
-  }
 
     async verify(body: UserVerifyDto){        
         try{
