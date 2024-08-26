@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  UseGuards,
-  Request,
-  Res,
-  Session,
-} from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, Res, Session, Delete, Patch } from '@nestjs/common';
 import { UserService } from '@src/user/user.service';
 import { UserSignupDto } from '@src/user/dto/user.signup.dto';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
@@ -39,51 +30,59 @@ export class UserController {
     return await this.userService.findAll();
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  @ApiOperation({
-    summary: 'Get user info',
-    description: 'get profile information from accessToken inserted in cookies',
-  })
-  @ApiResponse({ status: 200, description: 'Success' })
-  @ApiResponse({ status: 401, description: 'Empty / Invalid token' })
-  @ApiResponse({ status: 410, description: 'Token has expired' })
-  async getProfile(@Request() req) {
-    return req.user;
-  }
+    @UseGuards(ApiGuard)
+    @UseGuards(JwtAuthGuard)
+	@Get('profile')
+    @ApiOperation({ summary: 'Get user info', description: 'get profile information from accessToken inserted in cookies' })
+    @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 401, description: 'Empty / Invalid token' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+    @ApiResponse({ status: 410, description: 'Token has expired' })        
+	async getProfile(@Request() req) {
+		return req.user;
+	}
 
-  @UseGuards(ApiGuard)
-  @Post()
-  @ApiOperation({
-    summary: 'Add new user',
-    description: 'create new user data in server database',
-  })
-  @ApiBody({ type: UserRequestDto })
-  @ApiResponse({ status: 201, description: 'Success' })
-  @ApiResponse({ status: 400, description: 'Request without API KEY' })
-  @ApiResponse({ status: 403, description: 'Invalid API KEY' })
-  @ApiResponse({ status: 408, description: 'Not verified or time expired' })
-  @ApiResponse({ status: 409, description: 'The user already exists' })
-  @ApiResponse({ status: 501, description: 'Server Error' })
-  async signUp(@Body() body: UserRequestDto) {
-    return await this.userService.signUp(body);
-  }
+    @UseGuards(ApiGuard)
+    @Post()
+    @ApiOperation({ summary: 'Add new user', description: 'create new user data in server database' })
+    @ApiBody({ type: UserSignupDto })
+    @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+    @ApiResponse({ status: 408, description: 'Not verified or time expired' })    
+    @ApiResponse({ status: 409, description: 'The user already exists' })
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async signUp(@Body() body: UserSignupDto) {
+        return await this.userService.signUp(body);
+    }
 
-  @UseGuards(ApiGuard)
-  @Post('email')
-  @ApiOperation({
-    summary: 'Send verification email',
-    description:
-      'send a verifcation email which would be 6digits for <email> value as the target',
-  })
-  @ApiBody({ type: EmailRequestDto })
-  @ApiResponse({ status: 201, description: 'Success' })
-  @ApiResponse({ status: 400, description: 'Request without API KEY' })
-  @ApiResponse({ status: 403, description: 'Invalid API KEY' })
-  @ApiResponse({ status: 501, description: 'Server Error' })
-  async sendVerification(@Body() body: EmailRequestDto) {
-    return await this.userService.sendVerification(body);
-  }
+    @UseGuards(ApiGuard)
+    @UseGuards(JwtAuthGuard)
+    @Patch()
+    @ApiOperation({ summary: 'Update user info', description: 'update user info in server database' })
+    @ApiBody({ type: UserUpdateDto })
+    @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+    @ApiResponse({ status: 408, description: 'Not verified or time expired' })    
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async update(@Request() req, @Body() updateInfo: UserUpdateDto) {
+        const targetId : string = req.user.id
+        return await this.userService.update(targetId, updateInfo);
+    }    
+
+    @UseGuards(ApiGuard)
+    @Post('email')
+    @ApiOperation({ summary: 'Send verification email', description: 'send a verifcation email which would be 6digits for <email> value as the target' })
+    @ApiBody({ type: EmailRequestDto })
+    @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async sendVerification(@Body() body: EmailRequestDto) {
+        return await this.userService.sendVerification(body);
+    }
 
   @UseGuards(ApiGuard)
   @Post('verify')
@@ -103,46 +102,79 @@ export class UserController {
     return await this.userService.verify(body);
   }
 
-  @UseGuards(LocalAuthGuard)
-  @Post('login')
-  @ApiOperation({
-    summary: 'Login',
-    description:
-      'Login with body information including e-mail and password and issue accessToken if request would be validate.',
-  })
-  @ApiBody({ type: UserLoginDto })
-  @ApiResponse({ status: 201, description: 'Success' })
-  @ApiResponse({ status: 401, description: 'Invalid e-mail or password' })
-  async login(@Request() req, @Res({ passthrough: true }) response) {
-    const accessToken = req.user.access;
-    const refreshToken = req.user.refresh;
-    response.cookie('access_token', accessToken, { httpOnly: true });
-    response.cookie('refresh_token', refreshToken, { httpOnly: true });
-    return 'success';
-  }
+    @UseGuards(ApiGuard)
+    @UseGuards(LocalAuthGuard)
+	@Post('login')
+    @ApiOperation({ summary: 'Login', description: 'Login with body information including e-mail and password and issue accessToken if request would be validate.' })
+    @ApiBody({ type: UserLoginDto })
+    @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+    @ApiResponse({ status: 401, description: 'Invalid e-mail or password' })    
+	async login(@Request() req, @Res({ passthrough: true}) response) {
+		const accessToken = req.user.access;
+        const refreshToken = req.user.refresh;
+        response.cookie('access_token', accessToken, { httpOnly: true });
+        response.cookie('refresh_token', refreshToken, { httpOnly: true });
+		return "success";
+	}    
 
-  @UseGuards(RefreshGuard)
-  @Post('refresh')
-  @ApiOperation({
-    summary: 'Refresh',
-    description:
-      'Refresh access token in case previous access token is expired.',
-  })
-  @ApiResponse({ status: 201, description: 'Success' })
-  @ApiResponse({ status: 401, description: 'Invalid refresh token' })
-  async refresh(@Request() req, @Res({ passthrough: true }) response) {
-    const accessToken = req.user.access;
-    const refreshToken = req.user.refresh;
-    response.cookie('access_token', accessToken, { httpOnly: true });
-    response.cookie('refresh_token', refreshToken, { httpOnly: true });
-    return 'success';
-  }
+    @UseGuards(ApiGuard)
+    @UseGuards(RefreshGuard)
+	@Post('refresh')
+    @ApiOperation({ summary: 'Refresh', description: 'Refresh access token in case previous access token is expired.' })
+    @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 401, description: 'Invalid refresh token' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+	async refresh(@Request() req, @Res({ passthrough: true}) response) {
+		const accessToken = req.user.access;
+        const refreshToken = req.user.refresh;
+        response.cookie('access_token', accessToken, { httpOnly: true });
+        response.cookie('refresh_token', refreshToken, { httpOnly: true });
+		return "success";
+	}        
 
-  @Post('logout')
-  @ApiResponse({ status: 201, description: 'Success' })
-  async logout(@Res({ passthrough: true }) response) {
-    response.clearCookie('access_token');
-    response.clearCookie('refresh_token');
-    return 'success';
-  }
-}
+    @UseGuards(ApiGuard)
+    @Post('logout')
+    @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+    async logout(@Res({ passthrough: true}) response) {
+        response.clearCookie('access_token');
+        response.clearCookie('refresh_token');
+        return "success";
+    }    
+
+    @UseGuards(ApiGuard)
+    @UseGuards(JwtAuthGuard)
+    @Delete('delete')
+    @ApiOperation({ summary: 'Delete', description: 'Delete a user by their ID from token validated' })
+    @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 401, description: 'Empty / Invalid token' })  
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })      
+    @ApiResponse({ status: 410, description: 'Token has expired' })      
+    @ApiResponse({ status: 404, description: 'User not found' })          
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async delete(@Request() req) {
+        const targetId : string = req.user.id
+        return await this.userService.delete(targetId);
+    }
+    
+    @UseGuards(ApiGuard)
+    @UseGuards(JwtAuthGuard)
+    @Get('ctoken')
+    @ApiOperation({ summary: 'Get', description: 'Request to get the specific token for connecting to chat server' })
+    @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 401, description: 'Empty / Invalid token' })  
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })      
+    @ApiResponse({ status: 410, description: 'Token has expired' })      
+    @ApiResponse({ status: 404, description: 'User not found' })          
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async ctoken(@Request() req) {
+        //generate new specific token which is used for chat connection
+        return req.cookies['access_token'];
+    }    
+}    

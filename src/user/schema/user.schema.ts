@@ -39,7 +39,33 @@ export class User extends Document {
     id: string;
     email: string;
     name: string;
-  };
+
+    @Prop({
+        required: true,
+    })
+    @IsString()
+    @IsNotEmpty()
+    password: string;
+
+    @Prop({
+        default: true
+    })
+    @IsBoolean()
+    alarm: boolean;
+
+    @Prop()
+    @IsString()
+    sns?: string;
+
+    @Prop()
+    @IsString()
+    imgUrl?: string;
+
+    readonly readOnlyData: {
+        id: string;
+        email: string;
+        name: string;
+    };
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

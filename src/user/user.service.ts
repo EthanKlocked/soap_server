@@ -1,11 +1,13 @@
-import {
-  Inject,
-  Injectable,
-  NotImplementedException,
-  UnauthorizedException,
-  RequestTimeoutException,
-  ConflictException,
-  OnModuleInit,
+import { 
+    Inject, 
+    Injectable, 
+    NotImplementedException, 
+    UnauthorizedException, 
+    RequestTimeoutException, 
+    ConflictException, 
+    NotFoundException,
+    HttpException,
+    OnModuleInit 
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '@src/user/schema/user.schema';
@@ -73,53 +75,97 @@ export class UserService /*implements OnModuleInit*/ {
       if (!timePass || timePass != 'passed')
         throw new RequestTimeoutException('not verified or timed out');
 
-      //check user duplicated
-      const isUserExist = await this.userModel.exists({ email });
-      if (isUserExist) throw new ConflictException('The user already exists');
+    async signUp(body: UserSignupDto) {
+        try{
+            const { email, name, password } = body;
 
-      //join start
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await this.userModel.create({
-        email,
-        name,
-        password: hashedPassword,
-      });
-      return user.readOnlyData;
-    } catch (e) {
-      throw new NotImplementedException(e.message);
+            //check time expired 
+            const timePass = await this.cacheManager.get(body.email);
+            if(!timePass || timePass != 'passed') throw new RequestTimeoutException('not verified or timed out');
+    
+            //check user duplicated
+            const isUserExist = await this.userModel.exists({ email });
+            if (isUserExist) throw new ConflictException('The user already exists');
+    
+            //join start
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const user = await this.userModel.create({
+                email,
+                name,
+                password: hashedPassword,
+            });
+            return user.readOnlyData;
+        }catch(e){
+            if (e instanceof HttpException) throw e; //controlled
+            throw new NotImplementedException(e.message);            
+        }
     }
   }
 
-  async sendVerification(body: EmailRequestDto) {
-    try {
-      const limitSeconds: number = 180;
-      const verifyToken: string = generateRandomNumber(6);
-      body.subject = 'verifcation number';
-      body.content = verifyToken;
-      await this.cacheManager.set(body.email, verifyToken, {
-        ttl: limitSeconds,
-      } as any);
-      this.emailService.sendMail(body);
-      return limitSeconds;
-    } catch (e) {
-      throw new NotImplementedException(e.message);
+    async update(userId: string, updateInfo: UserUpdateDto): Promise<User> {
+        try{        
+            //check fields
+            const updateFields: Partial<User> = {};
+            if (updateInfo.name) updateFields.name = updateInfo.name;
+            if (updateInfo.alarm !== undefined) updateFields.alarm = updateInfo.alarm;
+            if (updateInfo.imgUrl) updateFields.imgUrl = updateInfo.imgUrl;
+        
+            //update start 
+            const updatedUser = await this.userModel.findByIdAndUpdate(
+                userId,
+                { $set: updateFields },
+                { new: true, runValidators: true }
+            );        
+            if (!updatedUser) throw new NotFoundException('User not found');
+            return updatedUser;
+        } catch(e){
+            if(e instanceof HttpException) throw e; //controlled
+            throw new NotImplementedException(e.message);
+        }
+    }
+
+
+    async sendVerification(body: EmailRequestDto) {
+        try{
+            const limitSeconds : number = 180;
+            const verifyToken : string = generateRandomNumber(6);
+            body.subject = 'verifcation number';
+            body.content = verifyToken;
+            await this.cacheManager.set(body.email, verifyToken, { ttl: limitSeconds } as any);
+            this.emailService.sendMail(body);
+            return limitSeconds;
+        }catch(e){
+            throw new NotImplementedException(e.message); 
+        }
     }
   }
 
-  async verify(body: UserVerifyDto) {
-    try {
-      const targetCode = await this.cacheManager.get(body.email);
-      if (targetCode === undefined)
-        throw new RequestTimeoutException('not sent or timed out');
-      if (body.verificationCode === targetCode) {
-        const limitSeconds: number = 300;
-        await this.cacheManager.set(body.email, 'passed', {
-          ttl: limitSeconds,
-        } as any); //limited time session for 5mins in joining process
-        return 'Success';
-      } else throw new UnauthorizedException('Invalid code');
-    } catch (e) {
-      throw new NotImplementedException(e.message);
+    async verify(body: UserVerifyDto){        
+        try{
+            const targetCode = await this.cacheManager.get(body.email);
+            if(targetCode === undefined) throw new RequestTimeoutException('not sent or timed out');
+            if(body.verificationCode === targetCode){
+                const limitSeconds : number = 300;
+                await this.cacheManager.set(body.email, 'passed',{ ttl: limitSeconds } as any); //limited time session for 5mins in joining process 
+                return 'Success';
+            } 
+            else throw new UnauthorizedException('Invalid code');
+        }catch(e){
+            if (e instanceof HttpException) throw e; //controlled
+            throw new NotImplementedException(e.message);             
+        }
     }
-  }
+
+    async delete(userId: string) {
+        try {
+            const deletedUser = await this.userModel.findByIdAndDelete(userId);
+            if (!deletedUser) {
+                throw new NotFoundException(`User with ID ${userId} not found`);
+            }
+            return deletedUser.readOnlyData;
+        } catch (e) {
+            if(e instanceof HttpException) throw e; //controlled
+            throw new NotImplementedException(e.message);
+        }
+    }
 }
