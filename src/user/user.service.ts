@@ -1,7 +1,7 @@
 import { 
     Inject, 
     Injectable, 
-    NotImplementedException, 
+    InternalServerErrorException,
     UnauthorizedException, 
     RequestTimeoutException, 
     ConflictException, 
@@ -21,6 +21,7 @@ import { EmailService } from 'src/email/email.service';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from './dto/user.verify.dto';
 import * as bcrypt from 'bcryptjs';
+
 
 //onModuleInit interface and addNewField method need to be activated for case new columns added 
 @Injectable()
@@ -44,25 +45,25 @@ export class UserService /*implements OnModuleInit*/ {
             const users = await this.userModel.find().exec();
             return users.map((u:User) : User['readOnlyData'] => u.readOnlyData);    
         }catch(e){
-            throw new NotImplementedException(e.message);            
+            throw new InternalServerErrorException('An unexpected error occurred');
         }
     }
 
     async findOne(option: object = null){
         try{
-            const user = await this.userModel.findOne(option);
+            const user = await this.userModel.findOne(option).exec();
             return user;
         }catch(e){
-            throw new NotImplementedException(e.message);            
+            throw new InternalServerErrorException('An unexpected error occurred');
         }
     }    
 
     async findById(id:string){
         try{
-            const user = await this.userModel.findById(id);
+            const user = await this.userModel.findById(id).exec();
             return user;
         }catch(e){
-            throw new NotImplementedException(e.message);            
+            throw new InternalServerErrorException('An unexpected error occurred');
         }        
     }
 
@@ -75,7 +76,7 @@ export class UserService /*implements OnModuleInit*/ {
             if(!timePass || timePass != 'passed') throw new RequestTimeoutException('not verified or timed out');
     
             //check user duplicated
-            const isUserExist = await this.userModel.exists({ email });
+            const isUserExist = await this.userModel.exists({ email }).exec();
             if (isUserExist) throw new ConflictException('The user already exists');
     
             //join start
@@ -88,7 +89,7 @@ export class UserService /*implements OnModuleInit*/ {
             return user.readOnlyData;
         }catch(e){
             if (e instanceof HttpException) throw e; //controlled
-            throw new NotImplementedException(e.message);            
+            throw new InternalServerErrorException('An unexpected error occurred');
         }
     }
 
@@ -105,15 +106,14 @@ export class UserService /*implements OnModuleInit*/ {
                 userId,
                 { $set: updateFields },
                 { new: true, runValidators: true }
-            );        
+            ).exec();        
             if (!updatedUser) throw new NotFoundException('User not found');
             return updatedUser;
         } catch(e){
             if(e instanceof HttpException) throw e; //controlled
-            throw new NotImplementedException(e.message);
+            throw new InternalServerErrorException('An unexpected error occurred');
         }
     }
-
 
     async sendVerification(body: EmailRequestDto) {
         try{
@@ -125,7 +125,7 @@ export class UserService /*implements OnModuleInit*/ {
             this.emailService.sendMail(body);
             return limitSeconds;
         }catch(e){
-            throw new NotImplementedException(e.message); 
+            throw new InternalServerErrorException('An unexpected error occurred');
         }
     }
 
@@ -140,21 +140,21 @@ export class UserService /*implements OnModuleInit*/ {
             } 
             else throw new UnauthorizedException('Invalid code');
         }catch(e){
-            if (e instanceof HttpException) throw e; //controlled
-            throw new NotImplementedException(e.message);             
+            if (e instanceof HttpException) throw e;
+            throw new InternalServerErrorException('An unexpected error occurred');
         }
     }
 
     async delete(userId: string) {
         try {
-            const deletedUser = await this.userModel.findByIdAndDelete(userId);
+            const deletedUser = await this.userModel.findByIdAndDelete(userId).exec();
             if (!deletedUser) {
                 throw new NotFoundException(`User with ID ${userId} not found`);
             }
             return deletedUser.readOnlyData;
         } catch (e) {
-            if(e instanceof HttpException) throw e; //controlled
-            throw new NotImplementedException(e.message);
+            if(e instanceof HttpException) throw e;
+            throw new InternalServerErrorException('An unexpected error occurred');
         }
     }
 }

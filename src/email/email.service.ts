@@ -1,7 +1,8 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { ConfigService } from "@nestjs/config";
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
+
 
 @Injectable()
 export class EmailService {
@@ -29,7 +30,7 @@ export class EmailService {
 			});
 			return 'Success';
 		}catch(e){
-			throw new NotImplementedException(e.message); 
+			throw new InternalServerErrorException('An unexpected error occurred');
 		}
 	}
 }

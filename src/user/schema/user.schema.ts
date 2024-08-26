@@ -2,10 +2,12 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { IsEmail, IsNotEmpty, IsString, IsBoolean } from 'class-validator';
 import { Document, SchemaOptions } from 'mongoose';
 
+
 const options: SchemaOptions = {
-  timestamps: true,
-  versionKey: false,
+    timestamps: true,
+    versionKey: false,
 };
+
 
 @Schema(options)
 export class User extends Document {
@@ -56,7 +58,7 @@ export const UserSchema = SchemaFactory.createForClass(User);
 
 UserSchema.virtual('readOnlyData').get(function (this: User) {
     return {
-        id: this.id,
+        id: this._id,
         email: this.email,
         name: this.name
     };

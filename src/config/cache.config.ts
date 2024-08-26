@@ -2,6 +2,7 @@ import { CacheModuleOptions } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as redisStore from 'cache-manager-redis-store';
 
+
 export const cacheConfig = {
 	imports: [ConfigModule],
 	inject: [ConfigService],
