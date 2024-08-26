@@ -1,10 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
-import { ConfigService } from "@nestjs/config";
-import { ApiOperation, ApiResponse} from '@nestjs/swagger'
+import { ConfigService } from '@nestjs/config';
+import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @Controller('')
 export class AppController {
-    constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {}
 
     @Get()
     @ApiOperation({ summary: 'default endpoint', description: 'welcome page / description for server and client application' })
