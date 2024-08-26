@@ -154,5 +154,21 @@ export class UserController {
     async delete(@Request() req) {
         const targetId : string = req.user.id
         return await this.userService.delete(targetId);
+    }
+    
+    @UseGuards(ApiGuard)
+    @UseGuards(JwtAuthGuard)
+    @Get('ctoken')
+    @ApiOperation({ summary: 'Get', description: 'Request to get the specific token for connecting to chat server' })
+    @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 401, description: 'Empty / Invalid token' })  
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })      
+    @ApiResponse({ status: 410, description: 'Token has expired' })      
+    @ApiResponse({ status: 404, description: 'User not found' })          
+    @ApiResponse({ status: 501, description: 'Server Error' })
+    async ctoken(@Request() req) {
+        //generate new specific token which is used for chat connection
+        return req.cookies['access_token'];
     }    
 }    
