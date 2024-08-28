@@ -36,6 +36,16 @@ export class Diary extends Document {
     imgUrl: string;
 
     @Prop({
+        trim: true,
+    })
+    imgUrl1: string;
+
+    @Prop({
+        trim: true,
+    })
+    imgUrl2: string;    
+
+    @Prop({
         required: true,
         type: Number,
         min: 1,

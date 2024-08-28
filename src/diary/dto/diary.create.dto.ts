@@ -33,6 +33,14 @@ export class DiaryCreateDto {
     @IsString()
     imgUrl?: string;
 
+    @IsOptional()
+    @IsString()
+    imgUrl1?: string;
+
+    @IsOptional()
+    @IsString()
+    imgUrl2?: string;
+
     @IsNotEmpty()
     @IsNumber()
     @Min(1)
