@@ -9,10 +9,10 @@ export const cacheConfig = {
 	isGlobal:true,
 	useFactory: (configService: ConfigService) => {
 		const option: CacheModuleOptions = {
-			ttl: configService.get('REDIS_TTL'),
+			ttl: configService.get('REDIS_TTL_CUSTOM'),
 			store: redisStore,
-			host: configService.get('REDIS_HOST'),
-			port: configService.get('REDIS_PORT')
+			host: configService.get('REDIS_HOST_CUSTOM'),
+			port: configService.get('REDIS_PORT_CUSTOM')
 		};
 		return option;
 	}
