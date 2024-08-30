@@ -10,6 +10,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { cacheConfig } from '@src/config/cache.config';
 import { dbConfig } from '@src/config/db.config';
 import { DiaryModule } from './diary/diary.module';
+import { FriendModule } from './friend/friend.module';
 
 
 @Module({
@@ -28,7 +29,7 @@ import { DiaryModule } from './diary/diary.module';
 		UserModule, 
 		EmailModule, 
 		AuthModule, 
-		DiaryModule
+		DiaryModule, FriendModule
 	],
 	controllers: [AppController],
 	providers: [AppService],
