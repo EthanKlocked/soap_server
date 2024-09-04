@@ -25,6 +25,11 @@ import { DiaryFindDto } from '@src/diary/dto/diary.find.dto';
 export class DiaryController {
     constructor(private readonly diariesService: DiaryService) {}
 
+    @Get('metas') //for checking metas temporarily
+    async findAllMeta() {
+        return this.diariesService.findAllMeta();
+    }    
+
     @Post()
     @ApiResponse({ status: 201, description: 'Success' })
     @ApiResponse({ status: 400, description: 'Request without API KEY' })    
