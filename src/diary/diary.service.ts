@@ -28,8 +28,9 @@ export class DiaryService {
         private readonly httpService: HttpService,
         private configService: ConfigService
     ) {
-        //this.aiServiceUrl = this.configService.get<string>('AI_SERVICE_URL') || 'http://localhost:3005';
-        this.aiServiceUrl = 'http://localhost:3005';
+        const aiServiceHost = this.configService.get<string>('AI_SERVICE_HOST_CUSTOM', 'localhost');
+        const aiServicePort = this.configService.get<number>('AI_SERVICE_PORT_CUSTOM', 3000);
+        this.aiServiceUrl = `http://${aiServiceHost}:${aiServicePort}`;
         this.apiSecret = this.configService.get<string>("API_SECRET")
     }
 
@@ -95,7 +96,7 @@ export class DiaryService {
         }
     }
 
-    async update(userId: string, id: string, body: DiaryUpdateDto) { //일기 내용 갱신 시 메타데이터 수정여부... 파악 후 기능추가 필요.....
+    async update(userId: string, id: string, body: DiaryUpdateDto) {
         try {
             //original chk
             const originalDiary = await this.diaryModel.findOne({ _id: id, userId: userId }).exec();
