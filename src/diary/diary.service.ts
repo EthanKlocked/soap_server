@@ -15,6 +15,7 @@ import { HttpService } from '@nestjs/axios';
 import { DiaryAnalysis } from '@src/diary/schema/diaryAnalysis.schema';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
+import { ClientSession } from 'mongoose';
 
 
 @Injectable()
@@ -45,7 +46,7 @@ export class DiaryService {
                 userId: userId,
             });
             //external ai service (fire and forget)
-            this.analyzeAndSaveDiaryMetadata(createdDiary._id, body.content).catch(error => {
+            this.analyzeAndSaveDiaryMetadata(userId, createdDiary._id, body.content).catch(error => {
                 console.error('Failed to analyze diary:', error);
             });
             //instantly return
@@ -113,7 +114,7 @@ export class DiaryService {
                 .exec();
             //update metadata (only case content changed)
             if (body.content && body.content !== originalDiary.content) {
-                this.analyzeAndSaveDiaryMetadata(id, body.content).catch(error => {
+                this.analyzeAndSaveDiaryMetadata(userId, id, body.content).catch(error => {
                     console.error('Failed to update diary metadata:', error);
                 });
             }
@@ -138,7 +139,12 @@ export class DiaryService {
         }
     }
 
-    private async analyzeAndSaveDiaryMetadata(diaryId: string, content: string): Promise<void> {
+    //case user deleted
+    async deleteAllByUserId(userId: string, session?: ClientSession): Promise<void> {
+        await this.diaryModel.deleteMany({ userId }).session(session).exec();
+    }
+
+    private async analyzeAndSaveDiaryMetadata(userId:string, diaryId: string, content: string): Promise<void> {
         try {
             const headers = {'Authorization': `Bearer ${this.apiSecret}`};
             const response = await firstValueFrom(
@@ -151,7 +157,12 @@ export class DiaryService {
             const analysisResult = response.data;
             await this.diaryAnalysisModel.findOneAndUpdate(
                 { diaryId },
-                { $set: analysisResult },
+                { 
+                    $set: {
+                        ...analysisResult,
+                        userId                    
+                    } 
+                },
                 { upsert: true, new: true }
             );
         } catch (error) {

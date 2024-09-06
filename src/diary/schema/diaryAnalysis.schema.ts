@@ -44,6 +44,13 @@ export class DiaryAnalysis extends Document {
 
     @Prop({ required: false })
     isAnalyzed?: boolean;
+
+    @Prop({ 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User', 
+        required: true 
+    })
+    userId: mongoose.Types.ObjectId;    
 }
 
 export const DiaryAnalysisSchema = SchemaFactory.createForClass(DiaryAnalysis);
@@ -56,3 +63,4 @@ DiaryAnalysisSchema.index({ keywords: 1 });
 DiaryAnalysisSchema.index({ tone: 1 });
 DiaryAnalysisSchema.index({ timeFocus: 1 });
 DiaryAnalysisSchema.index({ confidenceScore: 1 });
+DiaryAnalysisSchema.index({ userId: 1 });

@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { FriendController } from './friend.controller';
-import { FriendService } from './friend.service';
+import { FriendController } from '@src/friend/friend.controller';
+import { FriendService } from '@src/friend/friend.service';
 
 @Module({
-  controllers: [FriendController],
-  providers: [FriendService]
+    controllers: [FriendController],
+    providers: [FriendService]
 })
 export class FriendModule {}

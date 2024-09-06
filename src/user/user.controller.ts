@@ -143,8 +143,10 @@ export class UserController {
     @ApiResponse({ status: 404, description: 'User not found' })          
     @ApiResponse({ status: 410, description: 'Token has expired' })      
     @ApiResponse({ status: 500, description: 'Server Error' })
-    async delete(@Request() req) {
+    async delete(@Request() req, @Res({ passthrough: true}) response) {
         const targetId : string = req.user.id
+        response.clearCookie('access_token');
+        response.clearCookie('refresh_token');
         return await this.userService.delete(targetId);
     }
     
