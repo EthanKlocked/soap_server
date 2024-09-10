@@ -2,55 +2,53 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaOptions } from 'mongoose';
 import * as mongoose from 'mongoose';
 
-
 const options: SchemaOptions = {
-    timestamps: true,
-    versionKey: false,
+  timestamps: true,
+  versionKey: false,
 };
-
 
 @Schema(options)
 export class DiaryAnalysis extends Document {
-    @Prop({ 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Diary', 
-        required: true 
-    })
-    diaryId: mongoose.Types.ObjectId;
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Diary',
+    required: true,
+  })
+  diaryId: mongoose.Types.ObjectId;
 
-    @Prop({ required: false })
-    category?: string;
+  @Prop({ required: false })
+  category?: string;
 
-    @Prop({ type: [String], required: false })
-    subcategories?: string[];
+  @Prop({ type: [String], required: false })
+  subcategories?: string[];
 
-    @Prop({ required: false })
-    primaryEmotion?: string;
+  @Prop({ required: false })
+  primaryEmotion?: string;
 
-    @Prop({ required: false })
-    secondaryEmotion?: string;
+  @Prop({ required: false })
+  secondaryEmotion?: string;
 
-    @Prop({ type: [String], required: false })
-    keywords?: string[];
+  @Prop({ type: [String], required: false })
+  keywords?: string[];
 
-    @Prop({ required: false })
-    tone?: string;
+  @Prop({ required: false })
+  tone?: string;
 
-    @Prop({ required: false })
-    timeFocus?: string;
+  @Prop({ required: false })
+  timeFocus?: string;
 
-    @Prop({ required: false, min: 0, max: 100 })
-    confidenceScore?: number;
+  @Prop({ required: false, min: 0, max: 100 })
+  confidenceScore?: number;
 
-    @Prop({ required: false })
-    isAnalyzed?: boolean;
+  @Prop({ required: false })
+  isAnalyzed?: boolean;
 
-    @Prop({ 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User', 
-        required: true 
-    })
-    userId: mongoose.Types.ObjectId;    
+  @Prop({
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true,
+  })
+  userId: mongoose.Types.ObjectId;
 }
 
 export const DiaryAnalysisSchema = SchemaFactory.createForClass(DiaryAnalysis);

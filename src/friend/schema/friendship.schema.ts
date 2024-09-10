@@ -3,30 +3,28 @@ import { IsNotEmpty } from 'class-validator';
 import { Document, SchemaOptions } from 'mongoose';
 import { Types } from 'mongoose';
 
-
 const options: SchemaOptions = {
-    timestamps: true,
-    versionKey: false,
+  timestamps: true,
+  versionKey: false,
 };
-
 
 @Schema(options)
 export class Friendship extends Document {
-    @Prop({ 
-        type: Types.ObjectId, 
-        ref: 'User', 
-        required: true 
-    })
-    @IsNotEmpty()
-    user1Id: Types.ObjectId;
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+  })
+  @IsNotEmpty()
+  user1Id: Types.ObjectId;
 
-    @Prop({ 
-        type: Types.ObjectId, 
-        ref: 'User', 
-        required: true 
-    })
-    @IsNotEmpty()
-    user2Id: Types.ObjectId;
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'User',
+    required: true,
+  })
+  @IsNotEmpty()
+  user2Id: Types.ObjectId;
 }
 
 export const FriendshipSchema = SchemaFactory.createForClass(Friendship);

@@ -12,26 +12,26 @@ import { dbConfig } from '@src/config/db.config';
 import { DiaryModule } from './diary/diary.module';
 import { FriendModule } from './friend/friend.module';
 
-
 @Module({
-	imports: [
-		/********* CONFIG SETTING *********/
-		ConfigModule.forRoot({
-			cache:true,
-			isGlobal:true,
-			envFilePath: `.env.${process.env.NODE_ENV}`,
-		}),    
-		/********* CACHE SETTING *********/
-		CacheModule.registerAsync(cacheConfig),
-		/******* DATABASE SETTING ********/
-		MongooseModule.forRootAsync(dbConfig),
-		/********* CUSTOM MODULES *********/
-		UserModule, 
-		EmailModule, 
-		AuthModule, 
-		DiaryModule, FriendModule
-	],
-	controllers: [AppController],
-	providers: [AppService],
+  imports: [
+    /********* CONFIG SETTING *********/
+    ConfigModule.forRoot({
+      cache: true,
+      isGlobal: true,
+      envFilePath: `.env.${process.env.NODE_ENV}`,
+    }),
+    /********* CACHE SETTING *********/
+    CacheModule.registerAsync(cacheConfig),
+    /******* DATABASE SETTING ********/
+    MongooseModule.forRootAsync(dbConfig),
+    /********* CUSTOM MODULES *********/
+    UserModule,
+    EmailModule,
+    AuthModule,
+    DiaryModule,
+    FriendModule,
+  ],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
