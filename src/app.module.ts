@@ -11,6 +11,7 @@ import { cacheConfig } from '@src/config/cache.config';
 import { dbConfig } from '@src/config/db.config';
 import { DiaryModule } from './diary/diary.module';
 import { FriendModule } from './friend/friend.module';
+import { MyHomeModule } from './my-home/my-home.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { FriendModule } from './friend/friend.module';
     AuthModule,
     DiaryModule,
     FriendModule,
+    MyHomeModule,
   ],
   controllers: [AppController],
   providers: [AppService],
