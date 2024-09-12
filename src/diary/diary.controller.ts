@@ -40,8 +40,13 @@ export class DiaryController {
     @ApiResponse({ status: 403, description: 'Invalid API KEY' })            
     @ApiResponse({ status: 500, description: 'Server Error' })
     @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Number of similar users to return' })
-    async getSimilarUsers(@Request() req, @Query('limit') limit?: number) {
-        return this.diaryAnalysisService.getSimilarUsers(req.user.id, limit);
+    @ApiQuery({ name: 'diaryId', required: false, type: String, description: 'Specific diary ID to base similarity on' })
+    async getSimilarUsers(
+        @Request() req, 
+        @Query('limit') limit?: number,
+        @Query('diaryId') diaryId?: string
+    ) {
+        return this.diaryAnalysisService.getSimilarUsers(req.user.id, limit, diaryId);
     }    
 
     @Get(':id')

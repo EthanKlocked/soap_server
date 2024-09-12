@@ -7,7 +7,7 @@ import {
     ConflictException, 
     NotFoundException,
     HttpException,
-    OnModuleInit 
+    BadRequestException
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '@src/user/schema/user.schema';
@@ -21,8 +21,10 @@ import { EmailService } from 'src/email/email.service';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { DiaryService } from '@src/diary/diary.service';
 import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
-import { UserVerifyDto } from './dto/user.verify.dto';
+import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
+import { BlockedUser } from '@src/user/schema/blockedUser.schema';
 import * as bcrypt from 'bcryptjs';
+import { isValidObjectId } from 'mongoose';
 
 
 //onModuleInit interface and addNewField method need to be activated for case new columns added 
@@ -30,6 +32,7 @@ import * as bcrypt from 'bcryptjs';
 export class UserService /*implements OnModuleInit*/ {
     constructor(
         @InjectModel(User.name) private readonly userModel: Model<User>,
+        @InjectModel(BlockedUser.name) private readonly blockedUserModel: Model<BlockedUser>,
         @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
         private readonly emailService: EmailService,
         private readonly diaryService: DiaryService,
@@ -160,9 +163,59 @@ export class UserService /*implements OnModuleInit*/ {
             // Delete associated diary analyses
             await this.diaryAnalysisService.deleteAllByUserId(userId);
             return deletedUser.readOnlyData;
-        } catch (error) {
-            if (error instanceof NotFoundException) throw error;
-            throw new InternalServerErrorException('An error occurred while deleting the user');
+        } catch (e) {
+            if (e instanceof HttpException) throw e;
+            throw new InternalServerErrorException('An unexpected error occurred');
+        }
+    }
+
+    async blockUser(userId: string, userToBlockId: string): Promise<BlockedUser> {
+        try{
+            if (!isValidObjectId(userToBlockId)) throw new BadRequestException('Invalid user ID format');
+            const userToBlock = await this.userModel.findById(userToBlockId);
+            if (!userToBlock) throw new NotFoundException('User to block not found');
+            if (userId === userToBlockId) throw new ConflictException('You cannot block yourself');
+
+            const existingBlock = await this.blockedUserModel.findOne({
+                userId,
+                blockedUserId: userToBlockId
+            });
+            if (existingBlock) throw new ConflictException('User is already blocked');
+            const newBlock = new this.blockedUserModel({
+                userId,
+                blockedUserId: userToBlockId
+            });
+            return newBlock.save();
+        } catch (e) {
+            if (e instanceof HttpException) throw e;
+            console.log(e)
+            throw new InternalServerErrorException('An unexpected error occurred');            
+        }
+    }
+
+    async unblockUser(userId: string, blockedUserId: string): Promise<void> {
+        try{
+            const result = await this.blockedUserModel.deleteOne({
+                userId,
+                blockedUserId
+            });
+            if (result.deletedCount === 0) throw new NotFoundException('Blocked user not found');
+        }catch (e){
+            if (e instanceof HttpException) throw e;
+            throw new InternalServerErrorException('An unexpected error occurred');                        
+        }
+    }
+
+    async isUserBlocked(userId: string, targetUserId: string): Promise<boolean> {
+        try {
+            const block = await this.blockedUserModel.exists({
+                userId,
+                blockedUserId: targetUserId
+            });
+            return !!block;
+        } catch (e) {
+            if (e instanceof HttpException) throw e;
+            throw new InternalServerErrorException('An unexpected error occurred');
         }
     }
 }

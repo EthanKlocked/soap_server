@@ -15,9 +15,10 @@ export class DiaryAnalysisService {
         private configService: ConfigService
     ) {}
 
-    async getSimilarUsers(userId: string, limit: number = 5): Promise<any[]> {
+    async getSimilarUsers(userId: string, limit: number = 5, diaryId?: string): Promise<any[]> {
         try {
-            const userAnalyses = await this.diaryAnalysisModel.find({ userId }).lean();
+            const userAnalysesOption = diaryId ? {diaryId} : {userId}
+            const userAnalyses = await this.diaryAnalysisModel.find(userAnalysesOption).lean();
             const allUserAnalyses = await this.diaryAnalysisModel.find({ userId: { $ne: userId } }).lean();
 
             const userProfile = this.createUserProfile(userAnalyses);

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Res, Session, Delete, Patch } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, Request, Res, Param, Delete, Patch } from '@nestjs/common';
 import { UserService } from '@src/user/user.service';
 import { UserSignupDto } from '@src/user/dto/user.signup.dto';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
@@ -162,5 +162,53 @@ export class UserController {
     @ApiResponse({ status: 500, description: 'Server Error' })
     async ctoken(@Request() req) {
         return req.cookies['access_token'];
+    }    
+
+    @UseGuards(JwtAuthGuard)
+    @Post('block')
+    @ApiOperation({ summary: 'Block a user', description: 'Block a user by their ID' })
+    @ApiResponse({ status: 201, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY or target id is not valid format' })    
+    @ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })    
+    @ApiResponse({ status: 404, description: 'User not found' })    
+    @ApiResponse({ status: 409, description: 'Conflict: User is already blocked or you cannot block yourself' })
+    @ApiResponse({ status: 500, description: 'Server Error' })
+    async blockUser(
+        @Request() req,
+        @Body('userToBlockId') userToBlockId: string
+    ) {
+        return this.userService.blockUser(req.user.id, userToBlockId);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Delete('unblock/:blockedUserId')
+    @ApiOperation({ summary: 'Unblock a user', description: 'Unblock a previously blocked user by their ID' })
+    @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })
+    @ApiResponse({ status: 404, description: 'User not found' })          
+    @ApiResponse({ status: 500, description: 'Server Error' })
+    async unblockUser(
+        @Request() req,
+        @Param('blockedUserId') blockedUserId: string
+    ) {
+        return this.userService.unblockUser(req.user.id, blockedUserId);
+    }
+    
+    @UseGuards(JwtAuthGuard)
+    @Get('is-blocked/:targetUserId')
+    @ApiOperation({ summary: 'Check if a user is blocked', description: 'Check if the current user has blocked the specified target user' })
+    @ApiResponse({ status: 200, description: 'Success' })
+    @ApiResponse({ status: 400, description: 'Request without API KEY' })    
+    @ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+    @ApiResponse({ status: 403, description: 'Invalid API KEY' })
+    @ApiResponse({ status: 500, description: 'Server Error' })
+    async isUserBlocked(
+        @Request() req,
+        @Param('targetUserId') targetUserId: string
+    ) {
+        return this.userService.isUserBlocked(req.user.id, targetUserId);
     }    
 }    
