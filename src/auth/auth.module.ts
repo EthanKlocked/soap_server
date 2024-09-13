@@ -8,15 +8,8 @@ import { JwtStrategy } from '@src/auth/strategy/jwt.strategy';
 import { LocalStrategy } from '@src/auth/strategy/local.strategy';
 import { RefreshStrategy } from './strategy/refresh.strategy';
 
-
 @Module({
-    imports: [
-        UserModule, 
-        PassportModule,
-        JwtModule.registerAsync(jwtConfig)
-    ],
-    providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy],
+	imports: [UserModule, PassportModule, JwtModule.registerAsync(jwtConfig)],
+	providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy]
 })
-
-
 export class AuthModule {}

@@ -7,17 +7,16 @@ import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
 import { Diary, DiarySchema } from '@src/diary/schema/diary.schema';
 import { DiaryAnalysis, DiaryAnalysisSchema } from '@src/diary/schema/diaryAnalysis.schema';
 
-
 @Module({
-    imports: [
+	imports: [
 		MongooseModule.forFeature([
 			{ name: Diary.name, schema: DiarySchema },
 			{ name: DiaryAnalysis.name, schema: DiaryAnalysisSchema }
 		]),
 		HttpModule
-    ],
-    controllers: [DiaryController],
-    providers: [DiaryService, DiaryAnalysisService],
-  	exports: [DiaryService, DiaryAnalysisService]
+	],
+	controllers: [DiaryController],
+	providers: [DiaryService, DiaryAnalysisService],
+	exports: [DiaryService, DiaryAnalysisService]
 })
 export class DiaryModule {}

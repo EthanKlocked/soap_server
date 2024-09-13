@@ -2,11 +2,10 @@ import { CacheModuleOptions } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import * as redisStore from 'cache-manager-redis-store';
 
-
 export const cacheConfig = {
 	imports: [ConfigModule],
 	inject: [ConfigService],
-	isGlobal:true,
+	isGlobal: true,
 	useFactory: (configService: ConfigService) => {
 		const option: CacheModuleOptions = {
 			ttl: configService.get('REDIS_TTL_CUSTOM'),

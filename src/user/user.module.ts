@@ -7,11 +7,10 @@ import { BlockedUser, BlockedUserSchema } from '@src/user/schema/blockedUser.sch
 import { EmailModule } from '@src/email/email.module';
 import { DiaryModule } from '@src/diary/diary.module';
 
-
 @Module({
-	imports : [
-		MongooseModule.forFeature([{ name : User.name, schema : UserSchema}]),
-		MongooseModule.forFeature([{ name : BlockedUser.name, schema : BlockedUserSchema}]),
+	imports: [
+		MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+		MongooseModule.forFeature([{ name: BlockedUser.name, schema: BlockedUserSchema }]),
 		EmailModule,
 		DiaryModule
 	],

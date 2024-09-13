@@ -1,4 +1,14 @@
-import { Controller, Post, Body, Get, UseGuards, Request, Param, Delete, Patch } from '@nestjs/common';
+import {
+	Controller,
+	Post,
+	Body,
+	Get,
+	UseGuards,
+	Request,
+	Param,
+	Delete,
+	Patch
+} from '@nestjs/common';
 import { FriendService } from './friend.service';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
@@ -10,7 +20,7 @@ import { FriendRequestDto } from '@src/friend/dto/friend.request.dto';
 @ApiTags('friend')
 @ApiBearerAuth()
 export class FriendController {
-constructor(private readonly friendService: FriendService) {}
+	constructor(private readonly friendService: FriendService) {}
 
 	@Post('request')
 	@ApiOperation({ summary: 'Send a friend request' })
@@ -18,7 +28,10 @@ constructor(private readonly friendService: FriendService) {}
 	@ApiResponse({ status: 400, description: 'Bad request' })
 	@ApiResponse({ status: 401, description: 'Unauthorized' })
 	@ApiResponse({ status: 403, description: 'Forbidden' })
-	@ApiResponse({ status: 409, description: 'Conflict: already are friend or request already exists' })
+	@ApiResponse({
+		status: 409,
+		description: 'Conflict: already are friend or request already exists'
+	})
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async sendFriendRequest(@Request() req, @Body() sendFriendRequestDto: FriendRequestDto) {
 		const { receiverId, message } = sendFriendRequestDto;

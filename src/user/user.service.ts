@@ -1,13 +1,13 @@
-import { 
-    Inject, 
-    Injectable, 
-    InternalServerErrorException,
-    UnauthorizedException, 
-    RequestTimeoutException, 
-    ConflictException, 
-    NotFoundException,
-    HttpException,
-    BadRequestException
+import {
+	Inject,
+	Injectable,
+	InternalServerErrorException,
+	UnauthorizedException,
+	RequestTimeoutException,
+	ConflictException,
+	NotFoundException,
+	HttpException,
+	BadRequestException
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '@src/user/schema/user.schema';
@@ -26,196 +26,200 @@ import { BlockedUser } from '@src/user/schema/blockedUser.schema';
 import * as bcrypt from 'bcryptjs';
 import { isValidObjectId } from 'mongoose';
 
-
-//onModuleInit interface and addNewField method need to be activated for case new columns added 
+//onModuleInit interface and addNewField method need to be activated for case new columns added
 @Injectable()
 export class UserService /*implements OnModuleInit*/ {
-    constructor(
-        @InjectModel(User.name) private readonly userModel: Model<User>,
-        @InjectModel(BlockedUser.name) private readonly blockedUserModel: Model<BlockedUser>,
-        @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-        private readonly emailService: EmailService,
-        private readonly diaryService: DiaryService,
-        private readonly diaryAnalysisService: DiaryAnalysisService
-    ) {}
-    /* ######### OPTIONAL #########
+	constructor(
+		@InjectModel(User.name) private readonly userModel: Model<User>,
+		@InjectModel(BlockedUser.name) private readonly blockedUserModel: Model<BlockedUser>,
+		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+		private readonly emailService: EmailService,
+		private readonly diaryService: DiaryService,
+		private readonly diaryAnalysisService: DiaryAnalysisService
+	) {}
+	/* ######### OPTIONAL #########
     async onModuleInit() {
         await this.addNewField();
     }
     async addNewField() {
         await this.userModel.updateMany({ refresh: { $exists: false } }, { $set: { refresh: null } });
     } 
-    */   
+    */
 
-    async findAll(){
-        try{
-            const users = await this.userModel.find().exec();
-            return users.map((u:User) : User['readOnlyData'] => u.readOnlyData);    
-        }catch(e){
-            throw new InternalServerErrorException('An unexpected error occurred');
-        }
-    }
+	async findAll() {
+		try {
+			const users = await this.userModel.find().exec();
+			return users.map((u: User): User['readOnlyData'] => u.readOnlyData);
+		} catch (e) {
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 
-    async findOne(option: object = null){
-        try{
-            const user = await this.userModel.findOne(option).exec();
-            return user;
-        }catch(e){
-            throw new InternalServerErrorException('An unexpected error occurred');
-        }
-    }    
+	async findOne(option: object = null) {
+		try {
+			const user = await this.userModel.findOne(option).exec();
+			return user;
+		} catch (e) {
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 
-    async findById(id:string){
-        try{
-            const user = await this.userModel.findById(id).exec();
-            return user;
-        }catch(e){
-            throw new InternalServerErrorException('An unexpected error occurred');
-        }        
-    }
+	async findById(id: string) {
+		try {
+			const user = await this.userModel.findById(id).exec();
+			return user;
+		} catch (e) {
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 
-    async signUp(body: UserSignupDto) {
-        try{
-            const { email, name, password } = body;
+	async signUp(body: UserSignupDto) {
+		try {
+			const { email, name, password } = body;
 
-            //check time expired 
-            const timePass = await this.cacheManager.get(body.email);
-            if(!timePass || timePass != 'passed') throw new RequestTimeoutException('not verified or timed out');
-    
-            //check user duplicated
-            const isUserExist = await this.userModel.exists({ email }).exec();
-            if (isUserExist) throw new ConflictException('The user already exists');
-    
-            //join start
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const user = await this.userModel.create({
-                email,
-                name,
-                password: hashedPassword,
-            });
-            return user.readOnlyData;
-        }catch(e){
-            if (e instanceof HttpException) throw e; //controlled
-            throw new InternalServerErrorException('An unexpected error occurred');
-        }
-    }
+			//check time expired
+			const timePass = await this.cacheManager.get(body.email);
+			if (!timePass || timePass != 'passed')
+				throw new RequestTimeoutException('not verified or timed out');
 
-    async update(userId: string, updateInfo: UserUpdateDto): Promise<User> {
-        try{        
-            //check fields
-            const updateFields: Partial<User> = {};
-            if (updateInfo.name) updateFields.name = updateInfo.name;
-            if (updateInfo.alarm !== undefined) updateFields.alarm = updateInfo.alarm;
-            if (updateInfo.imgUrl) updateFields.imgUrl = updateInfo.imgUrl;
-        
-            //update start 
-            const updatedUser = await this.userModel.findByIdAndUpdate(
-                userId,
-                { $set: updateFields },
-                { new: true, runValidators: true }
-            ).exec();        
-            if (!updatedUser) throw new NotFoundException('User not found');
-            return updatedUser;
-        } catch(e){
-            if(e instanceof HttpException) throw e; //controlled
-            throw new InternalServerErrorException('An unexpected error occurred');
-        }
-    }
+			//check user duplicated
+			const isUserExist = await this.userModel.exists({ email }).exec();
+			if (isUserExist) throw new ConflictException('The user already exists');
 
-    async sendVerification(body: EmailRequestDto) {
-        try{
-            const limitSeconds : number = 180;
-            const verifyToken : string = generateRandomNumber(6);
-            body.subject = 'verifcation number';
-            body.content = verifyToken;
-            await this.cacheManager.set(body.email, verifyToken, { ttl: limitSeconds } as any);
-            this.emailService.sendMail(body);
-            return limitSeconds;
-        }catch(e){
-            throw new InternalServerErrorException('An unexpected error occurred');
-        }
-    }
+			//join start
+			const hashedPassword = await bcrypt.hash(password, 10);
+			const user = await this.userModel.create({
+				email,
+				name,
+				password: hashedPassword
+			});
+			return user.readOnlyData;
+		} catch (e) {
+			if (e instanceof HttpException) throw e; //controlled
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 
-    async verify(body: UserVerifyDto){        
-        try{
-            const targetCode = await this.cacheManager.get(body.email);
-            if(targetCode === undefined) throw new RequestTimeoutException('not sent or timed out');
-            if(body.verificationCode === targetCode){
-                const limitSeconds : number = 300;
-                await this.cacheManager.set(body.email, 'passed',{ ttl: limitSeconds } as any); //limited time session for 5mins in joining process 
-                return 'Success';
-            } 
-            else throw new UnauthorizedException('Invalid code');
-        }catch(e){
-            if (e instanceof HttpException) throw e;
-            throw new InternalServerErrorException('An unexpected error occurred');
-        }
-    }
+	async update(userId: string, updateInfo: UserUpdateDto): Promise<User> {
+		try {
+			//check fields
+			const updateFields: Partial<User> = {};
+			if (updateInfo.name) updateFields.name = updateInfo.name;
+			if (updateInfo.alarm !== undefined) updateFields.alarm = updateInfo.alarm;
+			if (updateInfo.imgUrl) updateFields.imgUrl = updateInfo.imgUrl;
 
-    async delete(userId: string) { //추후 트랜잭션 고려...
-        try {
-            const deletedUser = await this.userModel.findByIdAndDelete(userId).exec();
-            if (!deletedUser) {
-                throw new NotFoundException(`User with ID ${userId} not found`);
-            }
-            // Delete associated diaries
-            await this.diaryService.deleteAllByUserId(userId);
-            // Delete associated diary analyses
-            await this.diaryAnalysisService.deleteAllByUserId(userId);
-            return deletedUser.readOnlyData;
-        } catch (e) {
-            if (e instanceof HttpException) throw e;
-            throw new InternalServerErrorException('An unexpected error occurred');
-        }
-    }
+			//update start
+			const updatedUser = await this.userModel
+				.findByIdAndUpdate(
+					userId,
+					{ $set: updateFields },
+					{ new: true, runValidators: true }
+				)
+				.exec();
+			if (!updatedUser) throw new NotFoundException('User not found');
+			return updatedUser;
+		} catch (e) {
+			if (e instanceof HttpException) throw e; //controlled
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 
-    async blockUser(userId: string, userToBlockId: string): Promise<BlockedUser> {
-        try{
-            if (!isValidObjectId(userToBlockId)) throw new BadRequestException('Invalid user ID format');
-            const userToBlock = await this.userModel.findById(userToBlockId);
-            if (!userToBlock) throw new NotFoundException('User to block not found');
-            if (userId === userToBlockId) throw new ConflictException('You cannot block yourself');
+	async sendVerification(body: EmailRequestDto) {
+		try {
+			const limitSeconds: number = 180;
+			const verifyToken: string = generateRandomNumber(6);
+			body.subject = 'verifcation number';
+			body.content = verifyToken;
+			await this.cacheManager.set(body.email, verifyToken, { ttl: limitSeconds } as any);
+			this.emailService.sendMail(body);
+			return limitSeconds;
+		} catch (e) {
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 
-            const existingBlock = await this.blockedUserModel.findOne({
-                userId,
-                blockedUserId: userToBlockId
-            });
-            if (existingBlock) throw new ConflictException('User is already blocked');
-            const newBlock = new this.blockedUserModel({
-                userId,
-                blockedUserId: userToBlockId
-            });
-            return newBlock.save();
-        } catch (e) {
-            if (e instanceof HttpException) throw e;
-            console.log(e)
-            throw new InternalServerErrorException('An unexpected error occurred');            
-        }
-    }
+	async verify(body: UserVerifyDto) {
+		try {
+			const targetCode = await this.cacheManager.get(body.email);
+			if (targetCode === undefined)
+				throw new RequestTimeoutException('not sent or timed out');
+			if (body.verificationCode === targetCode) {
+				const limitSeconds: number = 300;
+				await this.cacheManager.set(body.email, 'passed', { ttl: limitSeconds } as any); //limited time session for 5mins in joining process
+				return 'Success';
+			} else throw new UnauthorizedException('Invalid code');
+		} catch (e) {
+			if (e instanceof HttpException) throw e;
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 
-    async unblockUser(userId: string, blockedUserId: string): Promise<void> {
-        try{
-            const result = await this.blockedUserModel.deleteOne({
-                userId,
-                blockedUserId
-            });
-            if (result.deletedCount === 0) throw new NotFoundException('Blocked user not found');
-        }catch (e){
-            if (e instanceof HttpException) throw e;
-            throw new InternalServerErrorException('An unexpected error occurred');                        
-        }
-    }
+	async delete(userId: string) {
+		//추후 트랜잭션 고려...
+		try {
+			const deletedUser = await this.userModel.findByIdAndDelete(userId).exec();
+			if (!deletedUser) {
+				throw new NotFoundException(`User with ID ${userId} not found`);
+			}
+			// Delete associated diaries
+			await this.diaryService.deleteAllByUserId(userId);
+			// Delete associated diary analyses
+			await this.diaryAnalysisService.deleteAllByUserId(userId);
+			return deletedUser.readOnlyData;
+		} catch (e) {
+			if (e instanceof HttpException) throw e;
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 
-    async isUserBlocked(userId: string, targetUserId: string): Promise<boolean> {
-        try {
-            const block = await this.blockedUserModel.exists({
-                userId,
-                blockedUserId: targetUserId
-            });
-            return !!block;
-        } catch (e) {
-            if (e instanceof HttpException) throw e;
-            throw new InternalServerErrorException('An unexpected error occurred');
-        }
-    }
+	async blockUser(userId: string, userToBlockId: string): Promise<BlockedUser> {
+		try {
+			if (!isValidObjectId(userToBlockId))
+				throw new BadRequestException('Invalid user ID format');
+			const userToBlock = await this.userModel.findById(userToBlockId);
+			if (!userToBlock) throw new NotFoundException('User to block not found');
+			if (userId === userToBlockId) throw new ConflictException('You cannot block yourself');
+
+			const existingBlock = await this.blockedUserModel.findOne({
+				userId,
+				blockedUserId: userToBlockId
+			});
+			if (existingBlock) throw new ConflictException('User is already blocked');
+			const newBlock = new this.blockedUserModel({
+				userId,
+				blockedUserId: userToBlockId
+			});
+			return newBlock.save();
+		} catch (e) {
+			if (e instanceof HttpException) throw e;
+			console.log(e);
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
+
+	async unblockUser(userId: string, blockedUserId: string): Promise<void> {
+		try {
+			const result = await this.blockedUserModel.deleteOne({
+				userId,
+				blockedUserId
+			});
+			if (result.deletedCount === 0) throw new NotFoundException('Blocked user not found');
+		} catch (e) {
+			if (e instanceof HttpException) throw e;
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
+
+	async isUserBlocked(userId: string, targetUserId: string): Promise<boolean> {
+		try {
+			const block = await this.blockedUserModel.exists({
+				userId,
+				blockedUserId: targetUserId
+			});
+			return !!block;
+		} catch (e) {
+			if (e instanceof HttpException) throw e;
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 }

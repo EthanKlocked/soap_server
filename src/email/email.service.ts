@@ -1,35 +1,34 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
-import { ConfigService } from "@nestjs/config";
+import { ConfigService } from '@nestjs/config';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
-
 
 @Injectable()
 export class EmailService {
 	private readonly transporter;
 
-	constructor(private readonly configService: ConfigService){
+	constructor(private readonly configService: ConfigService) {
 		this.transporter = nodemailer.createTransport({
 			host: 'smtp.gmail.com',
 			port: 587,
 			secure: false,
 			auth: {
-				user : this.configService.get<string>("MAIL_ID"),
-				pass : this.configService.get<string>("MAIL_PASSWORD"),
+				user: this.configService.get<string>('MAIL_ID'),
+				pass: this.configService.get<string>('MAIL_PASSWORD')
 			}
 		});
 	}
 
 	async sendMail(body: EmailRequestDto) {
-		try{
+		try {
 			await this.transporter.sendMail({
-				from : 'Email from @soap.com <ethanklocked@gmail.com>',
-				to : body.email,
-				subject : body.subject,
-				text : body.content
+				from: 'Email from @soap.com <ethanklocked@gmail.com>',
+				to: body.email,
+				subject: body.subject,
+				text: body.content
 			});
 			return 'Success';
-		}catch(e){
+		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');
 		}
 	}
