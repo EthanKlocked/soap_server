@@ -10,7 +10,7 @@ import {
 	Patch,
 	Delete
 } from '@nestjs/common';
-import { ApiResponse, ApiQuery } from '@nestjs/swagger';
+import { ApiResponse, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 import { DiaryService } from '@src/diary/diary.service';
@@ -19,9 +19,9 @@ import { DiaryUpdateDto } from '@src/diary/dto/diary.update.dto';
 import { DiaryFindDto } from '@src/diary/dto/diary.find.dto';
 import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
 
-@UseGuards(ApiGuard)
-@UseGuards(JwtAuthGuard)
+@UseGuards(ApiGuard, JwtAuthGuard)
 @Controller('diary')
+@ApiTags('diary')
 export class DiaryController {
 	constructor(
 		private readonly diariesService: DiaryService,

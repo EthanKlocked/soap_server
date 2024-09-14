@@ -18,8 +18,16 @@ export class DiaryAnalysisService {
 		try {
 			const userAnalysesOption = diaryId ? { diaryId } : { userId };
 			const userAnalyses = await this.diaryAnalysisModel.find(userAnalysesOption).lean();
+
+			// search only for public datasets
+			const publicDiaryIds = await this.diaryModel
+				.find({ userId: { $ne: userId }, isPublic: true })
+				.distinct('_id');
 			const allUserAnalyses = await this.diaryAnalysisModel
-				.find({ userId: { $ne: userId } })
+				.find({
+					userId: { $ne: userId },
+					diaryId: { $in: publicDiaryIds }
+				})
 				.lean();
 
 			const userProfile = this.createUserProfile(userAnalyses);
