@@ -58,6 +58,12 @@ export class Diary extends Document {
 	detailedEmotions: string[];
 
 	@Prop({
+		type: Boolean,
+		default: true
+	})
+	isPublic: boolean;
+
+	@Prop({
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User',
 		required: true
@@ -71,6 +77,7 @@ export class Diary extends Document {
 		content: string;
 		coreEmotion: number;
 		detailedEmotions: string[];
+		isPublic: boolean;
 	};
 }
 
@@ -83,7 +90,8 @@ DiarySchema.virtual('readOnlyData').get(function (this: Diary) {
 		date: this.date,
 		content: this.content,
 		coreEmotion: this.coreEmotion,
-		detailedEmotions: this.detailedEmotions
+		detailedEmotions: this.detailedEmotions,
+		isPublic: this.isPublic
 	};
 });
 

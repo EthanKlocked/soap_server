@@ -7,6 +7,7 @@ import {
 	MaxLength,
 	ArrayMaxSize,
 	IsNumber,
+	IsBoolean,
 	Min,
 	Max
 } from 'class-validator';
@@ -50,4 +51,8 @@ export class DiaryCreateDto {
 	@IsString({ each: true })
 	@ArrayMaxSize(12)
 	detailedEmotions: string[];
+
+	@IsOptional()
+	@IsBoolean()
+	isPublic?: boolean;
 }
