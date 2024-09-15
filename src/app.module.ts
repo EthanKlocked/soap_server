@@ -12,6 +12,7 @@ import { dbConfig } from '@src/config/db.config';
 import { DiaryModule } from './diary/diary.module';
 import { FriendModule } from './friend/friend.module';
 import { MyHomeModule } from './my-home/my-home.module';
+import { RoomModule } from './room/room.module';
 
 @Module({
 	imports: [
@@ -30,7 +31,9 @@ import { MyHomeModule } from './my-home/my-home.module';
 		EmailModule,
 		AuthModule,
 		DiaryModule,
-		FriendModule
+		FriendModule,
+		MyHomeModule,
+		RoomModule
 	],
 	controllers: [AppController],
 	providers: [AppService]
