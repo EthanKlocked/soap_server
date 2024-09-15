@@ -16,7 +16,7 @@ export class DiaryAnalysisService {
 
 	async getSimilarUsers(userId: string, limit: number = 5, diaryId?: string): Promise<any[]> {
 		try {
-			const userAnalysesOption = diaryId ? { diaryId } : { userId };
+			const userAnalysesOption = diaryId ? { userId, diaryId } : { userId };
 			const userAnalyses = await this.diaryAnalysisModel.find(userAnalysesOption).lean();
 
 			// search only for public datasets

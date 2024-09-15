@@ -16,6 +16,9 @@ import { DiaryModule } from '@src/diary/diary.module';
 	],
 	controllers: [UserController],
 	providers: [UserService],
-	exports: [UserService]
+	exports: [
+		UserService,
+		MongooseModule.forFeature([{ name: BlockedUser.name, schema: BlockedUserSchema }])
+	]
 })
 export class UserModule {}

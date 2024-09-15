@@ -44,3 +44,8 @@ export class FriendRequest extends Document {
 }
 
 export const FriendRequestSchema = SchemaFactory.createForClass(FriendRequest);
+
+FriendRequestSchema.index(
+	{ senderId: 1, receiverId: 1 },
+	{ unique: true, partialFilterExpression: { status: 'pending' } }
+);
