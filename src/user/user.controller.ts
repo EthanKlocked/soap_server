@@ -17,8 +17,10 @@ import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { LocalAuthGuard } from '@src/auth/guard/local.guard';
 import { RefreshGuard } from '@src/auth/guard/refresh.guard';
+import { SnsAuthGuard } from '@src/auth/guard/sns.guard';
 import { UserLoginDto } from '@src/user/dto/user.login.dto';
 import { UserUpdateDto } from '@src/user/dto/user.update.dto';
+import { UserSnsDto } from '@src/user/dto/user.sns.dto';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 
@@ -55,6 +57,24 @@ export class UserController {
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async getProfile(@Request() req) {
 		return req.user;
+	}
+
+	@UseGuards(SnsAuthGuard)
+	@Post('sns-login')
+	@ApiOperation({
+		summary: 'SNS Login',
+		description: 'Login or register a user using SNS credentials'
+	})
+	@ApiBody({ type: UserSnsDto })
+	@ApiResponse({ status: 201, description: 'Success' })
+	@ApiResponse({ status: 400, description: 'Invalid request' })
+	@ApiResponse({ status: 401, description: 'Unauthorized' })
+	@ApiResponse({ status: 500, description: 'Server Error' })
+	async snsLogin(@Request() req, @Res({ passthrough: true }) response) {
+		const { access: accessToken, refresh: refreshToken } = req.user;
+		response.cookie('access_token', accessToken, { httpOnly: true });
+		response.cookie('refresh_token', refreshToken, { httpOnly: true });
+		return { message: 'SNS login successful' };
 	}
 
 	@Post()

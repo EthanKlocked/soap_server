@@ -7,9 +7,10 @@ import { jwtConfig } from '@src/config/jwt.config';
 import { JwtStrategy } from '@src/auth/strategy/jwt.strategy';
 import { LocalStrategy } from '@src/auth/strategy/local.strategy';
 import { RefreshStrategy } from './strategy/refresh.strategy';
+import { SnsStrategy } from './strategy/sns.strategy';
 
 @Module({
 	imports: [UserModule, PassportModule, JwtModule.registerAsync(jwtConfig)],
-	providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy]
+	providers: [AuthService, LocalStrategy, JwtStrategy, RefreshStrategy, SnsStrategy]
 })
 export class AuthModule {}

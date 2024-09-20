@@ -82,6 +82,28 @@ export class UserService /*implements OnModuleInit*/ {
 		return !!user;
 	}
 
+	async createUser(
+		email: string,
+		name: string,
+		password: string,
+		sns: string = 'local'
+	): Promise<User> {
+		try {
+			const hashedPassword = await bcrypt.hash(password, 10);
+			const user = await this.userModel.create({
+				email,
+				name,
+				password: hashedPassword,
+				sns
+			});
+			return user;
+		} catch (e) {
+			throw new InternalServerErrorException(
+				'An unexpected error occurred while creating user'
+			);
+		}
+	}
+
 	async signUp(body: UserSignupDto) {
 		try {
 			const { email, name, password } = body;
@@ -96,12 +118,7 @@ export class UserService /*implements OnModuleInit*/ {
 			if (isUserExist) throw new ConflictException('The user already exists');
 
 			//join start
-			const hashedPassword = await bcrypt.hash(password, 10);
-			const user = await this.userModel.create({
-				email,
-				name,
-				password: hashedPassword
-			});
+			const user = await this.createUser(email, name, password);
 			return user.readOnlyData;
 		} catch (e) {
 			if (e instanceof HttpException) throw e; //controlled
