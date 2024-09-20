@@ -19,10 +19,12 @@ import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { generateRandomNumber } from '@src/lib/common';
 import { EmailService } from 'src/email/email.service';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
-import { DiaryService } from '@src/diary/diary.service';
-import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
 import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
 import { BlockedUser } from '@src/user/schema/blockedUser.schema';
+import { Friendship } from '@src/friend/schema/friendship.schema';
+import { FriendRequest } from '@src/friend/schema/friendRequest.schema';
+import { Diary } from '@src/diary/schema/diary.schema';
+import { DiaryAnalysis } from '@src/diary/schema/diaryAnalysis.schema';
 import * as bcrypt from 'bcryptjs';
 import { isValidObjectId } from 'mongoose';
 
@@ -32,10 +34,12 @@ export class UserService /*implements OnModuleInit*/ {
 	constructor(
 		@InjectModel(User.name) private readonly userModel: Model<User>,
 		@InjectModel(BlockedUser.name) private readonly blockedUserModel: Model<BlockedUser>,
+		@InjectModel(Friendship.name) private friendshipModel: Model<Friendship>,
+		@InjectModel(FriendRequest.name) private friendRequestModel: Model<FriendRequest>,
+		@InjectModel(Diary.name) private diaryModel: Model<Diary>,
+		@InjectModel(DiaryAnalysis.name) private diaryAnalysisModel: Model<DiaryAnalysis>,
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-		private readonly emailService: EmailService,
-		private readonly diaryService: DiaryService,
-		private readonly diaryAnalysisService: DiaryAnalysisService
+		private readonly emailService: EmailService
 	) {}
 	/* ######### OPTIONAL #########
     async onModuleInit() {
@@ -160,16 +164,38 @@ export class UserService /*implements OnModuleInit*/ {
 	}
 
 	async delete(userId: string) {
-		//추후 트랜잭션 고려...
 		try {
 			const deletedUser = await this.userModel.findByIdAndDelete(userId).exec();
 			if (!deletedUser) {
 				throw new NotFoundException(`User with ID ${userId} not found`);
 			}
 			// Delete associated diaries
-			await this.diaryService.deleteAllByUserId(userId);
+			await this.diaryModel.deleteMany({ userId }).exec();
+
 			// Delete associated diary analyses
-			await this.diaryAnalysisService.deleteAllByUserId(userId);
+			await this.diaryAnalysisModel.deleteMany({ userId }).exec();
+
+			// Delete blocked reationship
+			await this.blockedUserModel
+				.deleteMany({
+					$or: [{ userId }, { blockedUserId: userId }]
+				})
+				.exec();
+
+			// Delete friendship
+			await this.friendshipModel
+				.deleteMany({
+					$or: [{ user1Id: userId }, { user2Id: userId }]
+				})
+				.exec();
+
+			// Delete friend request
+			await this.friendRequestModel
+				.deleteMany({
+					$or: [{ senderId: userId }, { receiverId: userId }]
+				})
+				.exec();
+
 			return deletedUser.readOnlyData;
 		} catch (e) {
 			if (e instanceof HttpException) throw e;

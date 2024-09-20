@@ -186,10 +186,9 @@ export class FriendService {
 	}
 
 	async getFriends(userId: string): Promise<Friendship[]> {
-		//차단 여부 동작 안함 체크 필요 (친구 탐색 시에도 차단여부 적용필요, 탈퇴 시 친구, 요청 삭제 필요)
 		try {
 			const blockedUsers = await this.blockedUserModel
-				.find({ userId: new Types.ObjectId(userId) })
+				.find({ userId })
 				.distinct('blockedUserId');
 			const friends = await this.friendshipModel
 				.find({

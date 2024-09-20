@@ -3,15 +3,15 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Diary } from '@src/diary/schema/diary.schema';
 import { DiaryAnalysis } from '@src/diary/schema/diaryAnalysis.schema';
-import { ConfigService } from '@nestjs/config';
 import { ClientSession } from 'mongoose';
+import { BlockedUser } from '@src/user/schema/blockedUser.schema';
 
 @Injectable()
 export class DiaryAnalysisService {
 	constructor(
 		@InjectModel(Diary.name) private diaryModel: Model<Diary>,
 		@InjectModel(DiaryAnalysis.name) private diaryAnalysisModel: Model<DiaryAnalysis>,
-		private configService: ConfigService
+		@InjectModel(BlockedUser.name) private blockedUserModel: Model<BlockedUser>
 	) {}
 
 	async getSimilarUsers(userId: string, limit: number = 5, diaryId?: string): Promise<any[]> {
@@ -19,9 +19,12 @@ export class DiaryAnalysisService {
 			const userAnalysesOption = diaryId ? { userId, diaryId } : { userId };
 			const userAnalyses = await this.diaryAnalysisModel.find(userAnalysesOption).lean();
 
-			// search only for public datasets
+			// search only for available datasets
+			const blockedUsers = await this.blockedUserModel
+				.find({ userId })
+				.distinct('blockedUserId');
 			const publicDiaryIds = await this.diaryModel
-				.find({ userId: { $ne: userId }, isPublic: true })
+				.find({ userId: { $ne: userId, $nin: blockedUsers }, isPublic: true })
 				.distinct('_id');
 			const allUserAnalyses = await this.diaryAnalysisModel
 				.find({
