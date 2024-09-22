@@ -10,8 +10,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 		super({
 			jwtFromRequest: ExtractJwt.fromExtractors([
 				(request: any) => {
-					const token =
-						request && request.cookies ? request.cookies['access_token'] : null;
+					const execution_env = process.env.NODE_ENV;
+					let token = null;
+					if (execution_env == 'dev') {
+						token = request && request.cookies ? request.cookies['access_token'] : null;
+					}
+					if (execution_env == 'prod') {
+						token = request.headers['x-access-token'];
+					}
 					return token;
 				}
 			]),

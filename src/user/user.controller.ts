@@ -72,8 +72,8 @@ export class UserController {
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async snsLogin(@Request() req, @Res({ passthrough: true }) response) {
 		const { access: accessToken, refresh: refreshToken } = req.user;
-		response.cookie('access_token', accessToken, { httpOnly: true });
-		response.cookie('refresh_token', refreshToken, { httpOnly: true });
+		response.cookie('access_token', accessToken, { httpOnly: false });
+		response.cookie('refresh_token', refreshToken, { httpOnly: false });
 		return { message: 'SNS login successful' };
 	}
 
@@ -157,8 +157,8 @@ export class UserController {
 	async login(@Request() req, @Res({ passthrough: true }) response) {
 		const accessToken = req.user.access;
 		const refreshToken = req.user.refresh;
-		response.cookie('access_token', accessToken, { httpOnly: true });
-		response.cookie('refresh_token', refreshToken, { httpOnly: true });
+		response.cookie('access_token', accessToken, { httpOnly: false });
+		response.cookie('refresh_token', refreshToken, { httpOnly: false });
 		return 'success';
 	}
 
@@ -175,8 +175,8 @@ export class UserController {
 	async refresh(@Request() req, @Res({ passthrough: true }) response) {
 		const accessToken = req.user.access;
 		const refreshToken = req.user.refresh;
-		response.cookie('access_token', accessToken, { httpOnly: true });
-		response.cookie('refresh_token', refreshToken, { httpOnly: true });
+		response.cookie('access_token', accessToken, { httpOnly: false });
+		response.cookie('refresh_token', refreshToken, { httpOnly: false });
 		return 'success';
 	}
 

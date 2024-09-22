@@ -14,8 +14,15 @@ export class RefreshStrategy extends PassportStrategy(Strategy, 'refresh') {
 		super({
 			jwtFromRequest: ExtractJwt.fromExtractors([
 				(request: any) => {
-					const token =
-						request && request.cookies ? request.cookies['refresh_token'] : null;
+					const execution_env = process.env.NODE_ENV;
+					let token = null;
+					if (execution_env == 'dev') {
+						token =
+							request && request.cookies ? request.cookies['refresh_token'] : null;
+					}
+					if (execution_env == 'prod') {
+						token = request.headers['x-refresh-token'];
+					}
 					return token;
 				}
 			]),
