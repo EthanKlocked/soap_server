@@ -27,6 +27,9 @@ import { ApiGuard } from '@src/auth/guard/api.guard';
 @UseGuards(ApiGuard)
 @Controller('user')
 @ApiTags('user')
+@ApiResponse({ status: 400, description: 'Request without API KEY' })
+@ApiResponse({ status: 403, description: 'Invalid API KEY' })
+@ApiResponse({ status: 500, description: 'Server Error' })
 export class UserController {
 	constructor(private readonly userService: UserService) {}
 
@@ -36,9 +39,6 @@ export class UserController {
 		description: 'get every users information for test environment'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async findAll() {
 		return await this.userService.findAll();
 	}
@@ -50,11 +50,8 @@ export class UserController {
 		description: 'get profile information from accessToken inserted in cookies'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 410, description: 'Token has expired' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async getProfile(@Request() req) {
 		return req.user;
 	}
@@ -67,9 +64,7 @@ export class UserController {
 	})
 	@ApiBody({ type: UserSnsDto })
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Invalid request' })
-	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
+	@ApiResponse({ status: 401, description: 'Unauthorized sns' })
 	async snsLogin(@Request() req, @Res({ passthrough: true }) response) {
 		const { access: accessToken, refresh: refreshToken } = req.user;
 		response.cookie('access_token', accessToken, { httpOnly: false });
@@ -84,11 +79,8 @@ export class UserController {
 	})
 	@ApiBody({ type: UserSignupDto })
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 408, description: 'Not verified or time expired' })
 	@ApiResponse({ status: 409, description: 'The user already exists' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async signUp(@Body() body: UserSignupDto) {
 		return await this.userService.signUp(body);
 	}
@@ -101,10 +93,7 @@ export class UserController {
 	})
 	@ApiBody({ type: UserUpdateDto })
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 408, description: 'Not verified or time expired' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
+	@ApiResponse({ status: 404, description: 'User not found' })
 	async update(@Request() req, @Body() updateInfo: UserUpdateDto) {
 		const targetId: string = req.user.id;
 		return await this.userService.update(targetId, updateInfo);
@@ -118,9 +107,6 @@ export class UserController {
 	})
 	@ApiBody({ type: EmailRequestDto })
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async sendVerification(@Body() body: EmailRequestDto) {
 		return await this.userService.sendVerification(body);
 	}
@@ -133,11 +119,8 @@ export class UserController {
 	})
 	@ApiBody({ type: UserVerifyDto })
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 401, description: 'Invalid code' })
 	@ApiResponse({ status: 408, description: 'Not sent or time expired' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async verify(@Body() body: UserVerifyDto) {
 		return await this.userService.verify(body);
 	}
@@ -151,9 +134,7 @@ export class UserController {
 	})
 	@ApiBody({ type: UserLoginDto })
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 401, description: 'Invalid e-mail or password' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	async login(@Request() req, @Res({ passthrough: true }) response) {
 		const accessToken = req.user.access;
 		const refreshToken = req.user.refresh;
@@ -169,9 +150,8 @@ export class UserController {
 		description: 'Refresh access token in case previous access token is expired.'
 	})
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 401, description: 'Invalid refresh token' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
+	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+	@ApiResponse({ status: 410, description: 'Token has expired' })
 	async refresh(@Request() req, @Res({ passthrough: true }) response) {
 		const accessToken = req.user.access;
 		const refreshToken = req.user.refresh;
@@ -182,8 +162,6 @@ export class UserController {
 
 	@Post('logout')
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	async logout(@Res({ passthrough: true }) response) {
 		response.clearCookie('access_token');
 		response.clearCookie('refresh_token');
@@ -197,12 +175,9 @@ export class UserController {
 		description: 'Delete a user by their ID from token validated'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 404, description: 'User not found' })
 	@ApiResponse({ status: 410, description: 'Token has expired' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async delete(@Request() req, @Res({ passthrough: true }) response) {
 		const targetId: string = req.user.id;
 		response.clearCookie('access_token');
@@ -217,12 +192,8 @@ export class UserController {
 		description: 'Request to get the specific token for connecting to chat server'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 404, description: 'User not found' })
 	@ApiResponse({ status: 410, description: 'Token has expired' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async ctoken(@Request() req) {
 		return req.cookies['access_token'];
 	}
@@ -233,16 +204,15 @@ export class UserController {
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({
 		status: 400,
-		description: 'Request without API KEY or target id is not valid format'
+		description: 'Target id is not valid format'
 	})
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 404, description: 'User not found' })
+	@ApiResponse({ status: 410, description: 'Token has expired' })
 	@ApiResponse({
 		status: 409,
 		description: 'Conflict: User is already blocked or you cannot block yourself'
 	})
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async blockUser(@Request() req, @Body('userToBlockId') userToBlockId: string) {
 		return this.userService.blockUser(req.user.id, userToBlockId);
 	}
@@ -254,11 +224,8 @@ export class UserController {
 		description: 'Unblock a previously blocked user by their ID'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 404, description: 'User not found' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async unblockUser(@Request() req, @Param('blockedUserId') blockedUserId: string) {
 		return this.userService.unblockUser(req.user.id, blockedUserId);
 	}
@@ -270,10 +237,8 @@ export class UserController {
 		description: 'Check if the current user has blocked the specified target user'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
+	@ApiResponse({ status: 410, description: 'Token has expired' })
 	async isUserBlocked(@Request() req, @Param('targetUserId') targetUserId: string) {
 		return this.userService.isUserBlocked(req.user.id, targetUserId);
 	}

@@ -5,6 +5,7 @@ import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
 @Controller('email')
 @ApiTags('email')
+@ApiResponse({ status: 500, description: 'Server Error' })
 export class EmailController {
 	constructor(private readonly mailService: EmailService) {}
 
@@ -15,7 +16,6 @@ export class EmailController {
 	})
 	@ApiBody({ type: EmailRequestDto })
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async sendMail(@Body() body: EmailRequestDto) {
 		await this.mailService.sendMail(body);
 	}

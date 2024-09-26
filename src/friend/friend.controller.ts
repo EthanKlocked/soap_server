@@ -19,22 +19,24 @@ import { FriendRequestDto } from '@src/friend/dto/friend.request.dto';
 @Controller('friend')
 @ApiTags('friend')
 @ApiBearerAuth()
+@ApiResponse({ status: 400, description: 'Request without API KEY' })
+@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+@ApiResponse({ status: 403, description: 'Invalid API KEY' })
+@ApiResponse({ status: 410, description: 'Token has expired' })
+@ApiResponse({ status: 500, description: 'Server Error' })
 export class FriendController {
 	constructor(private readonly friendService: FriendService) {}
 
 	@Post('request')
 	@ApiOperation({ summary: 'Send a friend request' })
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Bad request' })
-	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	@ApiResponse({ status: 403, description: 'Forbidden' })
+	@ApiResponse({ status: 400, description: 'Self request error / invalid id format' })
 	@ApiResponse({ status: 404, description: 'Receiver user not found' })
 	@ApiResponse({
 		status: 409,
 		description: 'Request already exists (rejected wating or pending)'
 	})
 	@ApiResponse({ status: 422, description: 'Already are friend' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async sendFriendRequest(@Request() req, @Body() sendFriendRequestDto: FriendRequestDto) {
 		const { receiverId, message } = sendFriendRequestDto;
 		return this.friendService.sendFriendRequest(req.user.id, receiverId, message);
@@ -43,13 +45,9 @@ export class FriendController {
 	@Patch('request/:requestId/accept')
 	@ApiOperation({ summary: 'Accept a friend request' })
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Bad request' })
-	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	@ApiResponse({ status: 403, description: 'Forbidden' })
 	@ApiResponse({ status: 404, description: 'Friend request not found' })
 	@ApiResponse({ status: 409, description: 'Conflict: not the request you got' })
 	@ApiResponse({ status: 422, description: 'Already are friend' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async acceptFriendRequest(@Request() req, @Param('requestId') requestId: string) {
 		return this.friendService.acceptFriendRequest(req.user.id, requestId);
 	}
@@ -57,13 +55,9 @@ export class FriendController {
 	@Patch('request/:requestId/reject')
 	@ApiOperation({ summary: 'Reject a friend request' })
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Bad request' })
-	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	@ApiResponse({ status: 403, description: 'Forbidden' })
 	@ApiResponse({ status: 404, description: 'Friend request not found' })
 	@ApiResponse({ status: 409, description: 'Conflict: not the request you got' })
 	@ApiResponse({ status: 422, description: 'Already are friend' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async rejectFriendRequest(@Request() req, @Param('requestId') requestId: string) {
 		return this.friendService.rejectFriendRequest(req.user.id, requestId);
 	}
@@ -71,11 +65,7 @@ export class FriendController {
 	@Delete('request/:requestId')
 	@ApiOperation({ summary: 'Delete a friend request' })
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Bad request' })
-	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	@ApiResponse({ status: 403, description: 'Forbidden' })
 	@ApiResponse({ status: 404, description: 'Friend request not found' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async deleteFriendRequest(@Param('requestId') requestId: string) {
 		return this.friendService.deleteFriendRequest(requestId);
 	}
@@ -83,10 +73,6 @@ export class FriendController {
 	@Get('requests/received')
 	@ApiOperation({ summary: 'Get all pending friend requests' })
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Bad request' })
-	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	@ApiResponse({ status: 403, description: 'Forbidden' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async getFriendRequests(@Request() req) {
 		return this.friendService.getFriendRequests(req.user.id);
 	}
@@ -94,10 +80,6 @@ export class FriendController {
 	@Get('requests/sent')
 	@ApiOperation({ summary: 'Get all status requests the user sent' })
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Bad request' })
-	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	@ApiResponse({ status: 403, description: 'Forbidden' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async getSentFriendRequests(@Request() req) {
 		return this.friendService.getSentFriendRequests(req.user.id);
 	}
@@ -105,10 +87,6 @@ export class FriendController {
 	@Get('list')
 	@ApiOperation({ summary: 'Get all friends' })
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Bad request' })
-	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	@ApiResponse({ status: 403, description: 'Forbidden' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async getFriends(@Request() req) {
 		return this.friendService.getFriends(req.user.id);
 	}
@@ -116,11 +94,7 @@ export class FriendController {
 	@Delete(':friendId')
 	@ApiOperation({ summary: 'Unfriend a user' })
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Bad request' })
-	@ApiResponse({ status: 401, description: 'Unauthorized' })
-	@ApiResponse({ status: 403, description: 'Forbidden' })
 	@ApiResponse({ status: 404, description: 'Friend not found' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async unfriend(@Request() req, @Param('friendId') friendId: string) {
 		await this.friendService.unfriend(req.user.id, friendId);
 	}

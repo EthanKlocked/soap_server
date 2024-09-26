@@ -22,6 +22,11 @@ import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
 @UseGuards(ApiGuard, JwtAuthGuard)
 @Controller('diary')
 @ApiTags('diary')
+@ApiResponse({ status: 400, description: 'Request without API KEY' })
+@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+@ApiResponse({ status: 403, description: 'Invalid API KEY' })
+@ApiResponse({ status: 410, description: 'Token has expired' })
+@ApiResponse({ status: 500, description: 'Server Error' })
 export class DiaryController {
 	constructor(
 		private readonly diariesService: DiaryService,
@@ -35,9 +40,6 @@ export class DiaryController {
 
 	@Get('similar-users')
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	@ApiQuery({
 		name: 'limit',
 		required: false,
@@ -60,47 +62,32 @@ export class DiaryController {
 
 	@Get(':id')
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async findOne(@Request() req, @Param('id') id: string) {
 		return this.diariesService.findOne(req.user.id, id);
 	}
 
 	@Get()
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async findAll(@Request() req, @Query() query: DiaryFindDto) {
 		return this.diariesService.findAll(req.user.id, query);
 	}
 
 	@Post()
 	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
 	async create(@Request() req, @Body() body: DiaryCreateDto) {
 		return this.diariesService.create(req.user.id, body);
 	}
 
 	@Patch(':id')
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 404, description: 'Diary / User not found' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
+	@ApiResponse({ status: 404, description: 'User not found or not permitted to update' })
 	async update(@Request() req, @Param('id') id: string, @Body() body: DiaryUpdateDto) {
 		return this.diariesService.update(req.user.id, id, body);
 	}
 
 	@Delete(':id')
 	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 400, description: 'Request without API KEY' })
-	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 404, description: 'Diary / User not found' })
-	@ApiResponse({ status: 500, description: 'Server Error' })
+	@ApiResponse({ status: 404, description: 'User not found or not permitted to delete' })
 	async delete(@Request() req, @Param('id') id: string) {
 		return this.diariesService.delete(req.user.id, id);
 	}
