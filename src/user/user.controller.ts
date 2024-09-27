@@ -149,15 +149,27 @@ export class UserController {
 		summary: 'Refresh',
 		description: 'Refresh access token in case previous access token is expired.'
 	})
-	@ApiResponse({ status: 201, description: 'Success' })
+	@ApiResponse({
+		status: 201,
+		description: 'Object with Token datas in Prod / Success Message in Dev'
+	})
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
 	@ApiResponse({ status: 410, description: 'Token has expired' })
 	async refresh(@Request() req, @Res({ passthrough: true }) response) {
+		const execution_env = process.env.NODE_ENV;
 		const accessToken = req.user.access;
 		const refreshToken = req.user.refresh;
-		response.cookie('access_token', accessToken, { httpOnly: false });
-		response.cookie('refresh_token', refreshToken, { httpOnly: false });
-		return 'success';
+		if (execution_env == 'dev') {
+			response.cookie('access_token', accessToken, { httpOnly: false });
+			response.cookie('refresh_token', refreshToken, { httpOnly: false });
+			return 'success';
+		}
+		if (execution_env == 'prod') {
+			return {
+				access_token: accessToken,
+				refresh_token: refreshToken
+			};
+		}
 	}
 
 	@Post('logout')

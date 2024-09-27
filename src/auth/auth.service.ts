@@ -46,7 +46,7 @@ export class AuthService {
 		// check email
 		const user = await this.userService.findOne({ email: body.email });
 		if (!user) {
-			console.log('Registering new user');
+			console.log('SNS : Registering new user');
 			// Create new user
 			const newUser = await this.userService.createUser(
 				body.email,
@@ -56,7 +56,7 @@ export class AuthService {
 			);
 			return { id: newUser._id.toString(), email: newUser.email };
 		} else {
-			console.log('User already exists');
+			console.log('SNS : User already exists login');
 			// 기존 사용자의 SNS 정보 업데이트가 필요한 경우 여기에 로직 추가
 			// 예: await this.userService.updateSnsInfo(user._id, body.sns);
 			return { id: user._id.toString(), email: user.email };
