@@ -9,7 +9,7 @@ import {
 	Delete,
 	Param
 } from '@nestjs/common';
-import { ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiResponse, ApiBearerAuth, ApiSecurity } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 import { RoomService } from './room.service';
@@ -19,6 +19,7 @@ import { ItemDto } from './dto/room-items.dto';
 
 @ApiBearerAuth()
 @UseGuards(ApiGuard, JwtAuthGuard)
+@ApiSecurity('api-key')
 @Controller('room')
 export class RoomController {
 	constructor(private readonly roomService: RoomService) {}

@@ -11,7 +11,7 @@ import {
 	ForbiddenException,
 	Query
 } from '@nestjs/common';
-import { ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import { ApiResponse, ApiBearerAuth, ApiQuery, ApiSecurity } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 import { MyHomeService } from './my-home.service';
@@ -20,6 +20,7 @@ import { UpdateMyHomeDto } from './dto/my-home.update.dto';
 
 @ApiBearerAuth()
 @UseGuards(ApiGuard, JwtAuthGuard)
+@ApiSecurity('api-key')
 @Controller('my-home')
 export class MyHomeController {
 	constructor(private readonly myHomeService: MyHomeService) {}

@@ -12,13 +12,13 @@ import {
 import { FriendService } from './friend.service';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiSecurity } from '@nestjs/swagger';
 import { FriendRequestDto } from '@src/friend/dto/friend.request.dto';
 
 @UseGuards(ApiGuard, JwtAuthGuard)
 @Controller('friend')
 @ApiTags('friend')
-@ApiBearerAuth()
+@ApiSecurity('api-key')
 @ApiResponse({ status: 400, description: 'Request without API KEY' })
 @ApiResponse({ status: 401, description: 'Empty / Invalid token' })
 @ApiResponse({ status: 403, description: 'Invalid API KEY' })

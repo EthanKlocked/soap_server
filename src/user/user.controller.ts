@@ -14,7 +14,7 @@ import { UserService } from '@src/user/user.service';
 import { UserSignupDto } from '@src/user/dto/user.signup.dto';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiSecurity } from '@nestjs/swagger';
 import { LocalAuthGuard } from '@src/auth/guard/local.guard';
 import { RefreshGuard } from '@src/auth/guard/refresh.guard';
 import { SnsAuthGuard } from '@src/auth/guard/sns.guard';
@@ -27,6 +27,7 @@ import { ApiGuard } from '@src/auth/guard/api.guard';
 @UseGuards(ApiGuard)
 @Controller('user')
 @ApiTags('user')
+@ApiSecurity('api-key')
 @ApiResponse({ status: 400, description: 'Request without API KEY' })
 @ApiResponse({ status: 403, description: 'Invalid API KEY' })
 @ApiResponse({ status: 500, description: 'Server Error' })
