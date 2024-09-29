@@ -10,7 +10,7 @@ import {
 	Patch,
 	Delete
 } from '@nestjs/common';
-import { ApiResponse, ApiQuery, ApiTags, ApiSecurity } from '@nestjs/swagger';
+import { ApiResponse, ApiQuery, ApiTags, ApiSecurity, ApiOperation } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 import { DiaryService } from '@src/diary/diary.service';
@@ -80,6 +80,11 @@ export class DiaryController {
 	}
 
 	@Patch(':id')
+	@ApiOperation({
+		summary: '일기 업데이트',
+		description:
+			'지정된 ID의 일기를 업데이트합니다. 모든 필드는 선택적이며, 일기 생성 시 파라미터와 동일합니다.'
+	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 404, description: 'User not found or not permitted to update' })
 	async update(@Request() req, @Param('id') id: string, @Body() body: DiaryUpdateDto) {

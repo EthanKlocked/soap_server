@@ -1,30 +1,57 @@
-import { IsInt, IsOptional, IsNotEmpty, IsPositive, Min, Max, ValidateIf } from 'class-validator';
+import { IsInt, IsOptional, IsPositive, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class DiaryFindDto {
+	@ApiProperty({
+		example: 1,
+		description: '페이지 번호',
+		default: 1,
+		required: false
+	})
 	@IsOptional()
 	@IsInt()
 	@Min(1)
 	@Type(() => Number)
 	page?: number = 1;
 
+	@ApiProperty({
+		example: 10,
+		description: '페이지당 항목 수',
+		default: 10,
+		required: false
+	})
 	@IsOptional()
 	@IsInt()
 	@IsPositive()
 	@Type(() => Number)
 	limit?: number = 10;
 
+	@ApiProperty({
+		example: 2023,
+		description: '조회할 연도',
+		minimum: 2000,
+		maximum: new Date().getFullYear(),
+		required: false
+	})
 	@IsOptional()
 	@IsInt()
 	@Min(2000)
 	@Max(new Date().getFullYear())
 	@Type(() => Number)
-	year: number;
+	year?: number;
 
+	@ApiProperty({
+		example: 6,
+		description: '조회할 월',
+		minimum: 1,
+		maximum: 12,
+		required: false
+	})
 	@IsOptional()
 	@IsInt()
 	@Min(1)
 	@Max(12)
 	@Type(() => Number)
-	month: number;
+	month?: number;
 }

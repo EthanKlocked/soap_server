@@ -40,7 +40,8 @@ export class DiaryAnalysisService {
 				([otherUserId, analyses]) => {
 					const otherUserProfile = this.createUserProfile(analyses);
 					const score = this.calculateProfileSimilarity(userProfile, otherUserProfile);
-					return { userId: otherUserId, score };
+					const adjustedScore = this.adjustSimilarityScore(score);
+					return { userId: otherUserId, score: adjustedScore };
 				}
 			);
 
@@ -113,6 +114,11 @@ export class DiaryAnalysisService {
 		const intersectionSize = keys1.filter(k => keys2.includes(k)).length;
 		const unionSize = new Set([...keys1, ...keys2]).size;
 		return intersectionSize / unionSize;
+	}
+
+	private adjustSimilarityScore(score: number): number {
+		const adjustedScore = 50 + score * 50;
+		return Math.round(adjustedScore * 100) / 100;
 	}
 
 	//case user deleted
