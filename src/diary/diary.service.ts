@@ -16,11 +16,14 @@ import { DiaryAnalysis } from '@src/diary/schema/diaryAnalysis.schema';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { ClientSession } from 'mongoose';
+import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 
 @Injectable()
 export class DiaryService {
 	private readonly aiServiceUrl: string;
 	private readonly apiSecret: string; // secret key for using ai service
+	private readonly s3Client: S3Client;
+	private readonly bucketName: string;
 
 	constructor(
 		@InjectModel(Diary.name) private diaryModel: Model<Diary>,
@@ -32,14 +35,46 @@ export class DiaryService {
 		const aiServicePort = this.configService.get<number>('AI_SERVICE_PORT_CUSTOM', 3000);
 		this.aiServiceUrl = `http://${aiServiceHost}:${aiServicePort}`;
 		this.apiSecret = this.configService.get<string>('API_SECRET');
+		this.bucketName = this.configService.get<string>('NCP_BUCKET_NAME');
+		this.s3Client = new S3Client({
+			region: 'kr-standard',
+			endpoint: 'https://kr.object.ncloudstorage.com',
+			credentials: {
+				accessKeyId: this.configService.get<string>('NCP_ACCESS_KEY'),
+				secretAccessKey: this.configService.get<string>('NCP_SECRET_KEY')
+			}
+		});
+	}
+
+	private async uploadImages(images: string[]): Promise<string[]> {
+		const uploadPromises = images.map(async (base64Image, index) => {
+			const buffer = Buffer.from(base64Image.split(',')[1], 'base64');
+			const key = `diary-images/${Date.now()}-${index}.jpg`;
+
+			const command = new PutObjectCommand({
+				Bucket: this.bucketName,
+				Key: key,
+				Body: buffer,
+				ContentType: 'image/jpeg'
+			});
+
+			await this.s3Client.send(command);
+
+			return `https://${this.bucketName}.kr.object.ncloudstorage.com/${key}`;
+		});
+
+		return Promise.all(uploadPromises);
 	}
 
 	async create(userId: string, body: DiaryCreateDto): Promise<DiaryCreateDto> {
 		try {
+			//upload
+			const imageUrls = await this.uploadImages(body.imageBox || []);
 			//create
 			const createdDiary = await this.diaryModel.create({
 				...body,
-				userId: userId
+				userId: userId,
+				imageBox: imageUrls
 			});
 			//external ai service (fire and forget)
 			this.analyzeAndSaveDiaryMetadata(userId, createdDiary._id, body.content).catch(
@@ -97,14 +132,39 @@ export class DiaryService {
 					'Diary not found or you do not have permission to update it'
 				);
 			}
-			//update diary
+
+			// 업데이트할 필드 준비
+			const updateFields: Partial<DiaryUpdateDto> = {};
+
+			// 이미지 처리
+			if (body.imageBox) {
+				try {
+					// 기존 이미지 삭제
+					await this.deleteImages(originalDiary.imageBox);
+					// 새 이미지 업로드
+					const newImageUrls = await this.uploadImages(body.imageBox);
+					updateFields.imageBox = newImageUrls;
+				} catch (error) {
+					throw new InternalServerErrorException('Failed to process images');
+				}
+			}
+
+			// 다른 필드들 처리
+			for (const [key, value] of Object.entries(body)) {
+				if (key !== 'imageBox' && value !== undefined) {
+					updateFields[key] = value;
+				}
+			}
+
+			// 다이어리 업데이트
 			const updatedDiary = await this.diaryModel
 				.findOneAndUpdate(
 					{ _id: id, userId: userId },
-					{ $set: body },
+					{ $set: updateFields },
 					{ new: true, runValidators: true }
 				)
 				.exec();
+
 			//update metadata (only case content changed)
 			if (body.content && body.content !== originalDiary.content) {
 				this.analyzeAndSaveDiaryMetadata(userId, id, body.content).catch(error => {
@@ -118,6 +178,24 @@ export class DiaryService {
 		}
 	}
 
+	private async deleteImages(imageUrls: string[]): Promise<void> {
+		for (const url of imageUrls) {
+			const key = url.split('/').pop();
+			if (key) {
+				try {
+					await this.s3Client.send(
+						new DeleteObjectCommand({
+							Bucket: this.bucketName,
+							Key: key
+						})
+					);
+				} catch (error) {
+					console.error(`Failed to delete image: ${key}`, error);
+				}
+			}
+		}
+	}
+
 	async delete(userId: string, id: string) {
 		try {
 			//delete diary
@@ -128,6 +206,12 @@ export class DiaryService {
 				throw new NotFoundException(
 					'Diary not found or you do not have permission to delete it'
 				);
+			// delete images
+			if (result.imageBox && result.imageBox.length > 0) {
+				await this.deleteImages(result.imageBox).catch(error => {
+					console.error('Failed to delete images:', error);
+				});
+			}
 			//delete metas (optianal)
 			this.diaryAnalysisModel.findOneAndDelete({ diaryId: id }).exec();
 			return result.readOnlyData;

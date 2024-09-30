@@ -29,19 +29,16 @@ export class Diary extends Document {
 	content: string;
 
 	@Prop({
-		trim: true
+		type: [String],
+		validate: [
+			{ validator: (val: string[]) => val.length <= 5, message: 'Maximum 5 images allowed' },
+			{
+				validator: (val: string[]) => val.every(img => img.length <= 5 * 1024 * 1024),
+				message: 'Each image must be 5MB or less'
+			}
+		]
 	})
-	imgUrl: string;
-
-	@Prop({
-		trim: true
-	})
-	imgUrl1: string;
-
-	@Prop({
-		trim: true
-	})
-	imgUrl2: string;
+	imageBox: string[];
 
 	@Prop({
 		required: true,
@@ -76,6 +73,7 @@ export class Diary extends Document {
 		date: Date;
 		content: string;
 		coreEmotion: number;
+		imageBox: string[];
 		detailedEmotions: string[];
 		isPublic: boolean;
 	};
@@ -89,6 +87,7 @@ DiarySchema.virtual('readOnlyData').get(function (this: Diary) {
 		title: this.title,
 		date: this.date,
 		content: this.content,
+		imageBox: this.imageBox,
 		coreEmotion: this.coreEmotion,
 		detailedEmotions: this.detailedEmotions,
 		isPublic: this.isPublic

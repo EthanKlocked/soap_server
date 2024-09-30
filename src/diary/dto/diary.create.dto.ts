@@ -34,35 +34,19 @@ export class DiaryCreateDto {
 	content: string;
 
 	@ApiProperty({
-		example: 'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCA...',
+		example: [
+			'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCA...',
+			'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='
+		],
 		required: false,
-		description: '이미지 Base64 문자열 (최대 5MB)'
+		description: '이미지 Base64 문자열 배열 (각 이미지 최대 5MB, 최대 5개)'
 	})
 	@IsOptional()
-	@IsString()
-	@MaxLength(5 * 1024 * 1024) // Approximately 5MB in Base64
-	imgUrl?: string;
-
-	@ApiProperty({
-		example:
-			'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==',
-		required: false,
-		description: '추가 이미지 Base64 문자열 (최대 5MB)'
-	})
-	@IsOptional()
-	@IsString()
-	@MaxLength(5 * 1024 * 1024)
-	imgUrl1?: string;
-
-	@ApiProperty({
-		example: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
-		required: false,
-		description: '추가 이미지 Base64 문자열 (최대 5MB)'
-	})
-	@IsOptional()
-	@IsString()
-	@MaxLength(5 * 1024 * 1024)
-	imgUrl2?: string;
+	@IsArray()
+	@ArrayMaxSize(5)
+	@IsString({ each: true })
+	@MaxLength(5 * 1024 * 1024, { each: true })
+	imageBox?: string[];
 
 	@ApiProperty({ example: 4, description: '핵심 감정 점수 (1-5)' })
 	@IsNotEmpty()
