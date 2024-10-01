@@ -92,8 +92,8 @@ export class DiaryController {
 
 	@Get()
 	@ApiOperation({
-		summary: '다이어리 목록 조회',
-		description: '사용자의 다이어리 목록을 조회합니다. 공개 여부, 연도, 월 등으로 필터링할 수 있습니다.'
+		summary: 'Retrieve diary list',
+		description: 'Fetches a list of user diaries. Can be filtered by public status, year, month, etc.'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiQuery({ name: 'page', required: false, type: Number, description: '페이지 번호' })
