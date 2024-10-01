@@ -10,8 +10,48 @@ const options: SchemaOptions = {
 export enum CategoryType {
 	MOVIE = 'movie',
 	MUSIC = 'music',
-	YOUTUBE = 'youtube'
+	YOUTUBE = 'youtube',
+	BOOK = 'book'
 }
+
+export type RatingType = 0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 3.5 | 4 | 4.5 | 5;
+
+type MovieContent = {
+	imageUrl: string;
+	title: string;
+	director: string;
+	releaseDate: string;
+	actors: string[];
+	story: string;
+	genre: string;
+	rating: RatingType;
+};
+
+type MusicContent = {
+	imageUrl: string;
+	title: string;
+	artist: string;
+};
+
+type YoutubeContent = {
+	title: string;
+	channelName: string;
+	url: string;
+	publishedAt: string;
+	thumbnailUrl: string;
+};
+
+type BookContent = {
+	imageUrl: string;
+	title: string;
+	author: string;
+	publisher: string;
+	releaseDate: string;
+	story: string;
+	rating: RatingType;
+};
+
+export type ContentType = MovieContent | MusicContent | YoutubeContent | BookContent;
 
 @Schema(options)
 export class MyHome extends Document {
@@ -28,14 +68,10 @@ export class MyHome extends Document {
 	review: string;
 
 	@Prop({
-		type: Number,
-		min: 0,
-		max: 5,
-		required: function (this: MyHome) {
-			return this.category === 'movie';
-		}
+		type: mongoose.Schema.Types.Mixed,
+		required: true
 	})
-	rating: number;
+	content: ContentType;
 
 	@Prop({
 		type: mongoose.Schema.Types.ObjectId,
