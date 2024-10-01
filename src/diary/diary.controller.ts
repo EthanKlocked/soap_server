@@ -47,7 +47,7 @@ export class DiaryController {
 	constructor(
 		private readonly diaryService: DiaryService,
 		private readonly diaryAnalysisService: DiaryAnalysisService
-	) { }
+	) {}
 
 	@Get('metas') //for checking metas temporarily
 	@ApiOperation({
@@ -93,14 +93,20 @@ export class DiaryController {
 	@Get()
 	@ApiOperation({
 		summary: 'Retrieve diary list',
-		description: 'Fetches a list of user diaries. Can be filtered by public status, year, month, etc.'
+		description:
+			'Fetches a list of user diaries. Can be filtered by public status, year, month, etc.'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiQuery({ name: 'page', required: false, type: Number, description: '페이지 번호' })
 	@ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 항목 수' })
 	@ApiQuery({ name: 'year', required: false, type: Number, description: '조회할 연도' })
 	@ApiQuery({ name: 'month', required: false, type: Number, description: '조회할 월' })
-	@ApiQuery({ name: 'isPublic', required: false, type: Boolean, description: '공개 여부 (true: 공개, false: 비공개, undefined: 모두)' })
+	@ApiQuery({
+		name: 'isPublic',
+		required: false,
+		type: Boolean,
+		description: '공개 여부 (true: 공개, false: 비공개, undefined: 모두)'
+	})
 	async findAll(@Request() req, @Query() query: DiaryFindDto) {
 		return this.diaryService.findAll(req.user.id, query);
 	}
@@ -158,15 +164,19 @@ export class DiaryController {
 	}
 
 	private validateFiles(files: Express.Multer.File[]): Express.Multer.File[] {
-		const maxSize = 5 * 1024 * 1024; // 5MB
+		const maxSize = 8 * 1024 * 1024; // 8MB
 		const allowedTypes = /(jpg|jpeg|png|gif)$/;
 
 		return files.filter(file => {
 			if (file.size > maxSize) {
-				throw new BadRequestException(`File ${file.originalname} is too large. Max size is 5MB.`);
+				throw new BadRequestException(
+					`File ${file.originalname} is too large. Max size is 8MB.`
+				);
 			}
 			if (!allowedTypes.test(file.originalname.toLowerCase())) {
-				throw new BadRequestException(`File ${file.originalname} has an invalid file type. Allowed types are jpg, jpeg, png, gif.`);
+				throw new BadRequestException(
+					`File ${file.originalname} has an invalid file type. Allowed types are jpg, jpeg, png, gif.`
+				);
 			}
 			return true;
 		});

@@ -25,7 +25,7 @@ import { FriendRequestDto } from '@src/friend/dto/friend.request.dto';
 @ApiResponse({ status: 410, description: 'Token has expired' })
 @ApiResponse({ status: 500, description: 'Server Error' })
 export class FriendController {
-	constructor(private readonly friendService: FriendService) { }
+	constructor(private readonly friendService: FriendService) {}
 
 	@Post('request')
 	@ApiOperation({
