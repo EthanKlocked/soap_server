@@ -6,6 +6,7 @@ export interface DiaryFindOption {
 		$gte: Date;
 		$lte: Date;
 	};
+	isPublic?: boolean;
 }
 
 export type SortOption = {

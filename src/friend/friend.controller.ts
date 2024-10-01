@@ -25,10 +25,13 @@ import { FriendRequestDto } from '@src/friend/dto/friend.request.dto';
 @ApiResponse({ status: 410, description: 'Token has expired' })
 @ApiResponse({ status: 500, description: 'Server Error' })
 export class FriendController {
-	constructor(private readonly friendService: FriendService) {}
+	constructor(private readonly friendService: FriendService) { }
 
 	@Post('request')
-	@ApiOperation({ summary: 'Send a friend request' })
+	@ApiOperation({
+		summary: 'Send a friend request',
+		description: 'Send a friend request to another user'
+	})
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Self request error / invalid id format' })
 	@ApiResponse({ status: 404, description: 'Receiver user not found' })
@@ -43,7 +46,10 @@ export class FriendController {
 	}
 
 	@Patch('request/:requestId/accept')
-	@ApiOperation({ summary: 'Accept a friend request' })
+	@ApiOperation({
+		summary: 'Accept a friend request',
+		description: 'Accept a pending friend request'
+	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 404, description: 'Friend request not found' })
 	@ApiResponse({ status: 409, description: 'Conflict: not the request you got' })

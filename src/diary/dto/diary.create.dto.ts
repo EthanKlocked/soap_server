@@ -11,7 +11,7 @@ import {
 	Min,
 	Max
 } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class DiaryCreateDto {
@@ -34,25 +34,22 @@ export class DiaryCreateDto {
 	content: string;
 
 	@ApiProperty({
-		example: [
-			'data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAMCAgMCA...',
-			'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg=='
-		],
+		type: 'array',
+		items: { type: 'string', format: 'binary' },
 		required: false,
-		description: '이미지 Base64 문자열 배열 (각 이미지 최대 5MB, 최대 5개)'
+		description: '이미지 파일 배열 (각 이미지 최대 5MB, 최대 5개)'
 	})
 	@IsOptional()
-	@IsArray()
 	@ArrayMaxSize(5)
-	@IsString({ each: true })
-	@MaxLength(5 * 1024 * 1024, { each: true })
-	imageBox?: string[];
+	//imageBox?: Express.Multer.File[];
+	imageBox?: any[];
 
 	@ApiProperty({ example: 4, description: '핵심 감정 점수 (1-5)' })
 	@IsNotEmpty()
 	@IsNumber()
 	@Min(1)
 	@Max(5)
+	@Transform(({ value }) => Number(value))
 	coreEmotion: number;
 
 	@ApiProperty({ example: ['행복', '기쁨', '설렘'], description: '상세 감정 키워드 목록' })

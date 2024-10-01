@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, IsPositive, Min, Max } from 'class-validator';
+import { IsInt, IsOptional, IsPositive, Min, Max, IsBoolean } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -54,4 +54,14 @@ export class DiaryFindDto {
 	@Max(12)
 	@Type(() => Number)
 	month?: number;
+
+	@ApiProperty({
+		example: true,
+		description: '공개 여부 (true: 공개, false: 비공개, undefined: 모두)',
+		required: false
+	})
+	@IsOptional()
+	@IsBoolean()
+	@Type(() => Boolean)
+	isPublic?: boolean;
 }

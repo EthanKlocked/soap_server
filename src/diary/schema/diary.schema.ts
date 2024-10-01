@@ -31,10 +31,9 @@ export class Diary extends Document {
 	@Prop({
 		type: [String],
 		validate: [
-			{ validator: (val: string[]) => val.length <= 5, message: 'Maximum 5 images allowed' },
 			{
-				validator: (val: string[]) => val.every(img => img.length <= 5 * 1024 * 1024),
-				message: 'Each image must be 5MB or less'
+				validator: (val: string[]) => val.length <= 5,
+				message: 'Maximum 5 images allowed'
 			}
 		]
 	})

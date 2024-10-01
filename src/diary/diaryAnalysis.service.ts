@@ -120,9 +120,4 @@ export class DiaryAnalysisService {
 		const adjustedScore = 50 + score * 50;
 		return Math.round(adjustedScore * 100) / 100;
 	}
-
-	//case user deleted
-	async deleteAllByUserId(userId: string, session?: ClientSession): Promise<void> {
-		await this.diaryAnalysisModel.deleteMany({ userId }).session(session).exec();
-	}
 }

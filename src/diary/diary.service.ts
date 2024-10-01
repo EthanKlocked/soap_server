@@ -17,6 +17,8 @@ import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
 import { ClientSession } from 'mongoose';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class DiaryService {
@@ -24,6 +26,8 @@ export class DiaryService {
 	private readonly apiSecret: string; // secret key for using ai service
 	private readonly s3Client: S3Client;
 	private readonly bucketName: string;
+	private readonly isDevEnvironment: boolean;
+	private readonly localImagePath: string;
 
 	constructor(
 		@InjectModel(Diary.name) private diaryModel: Model<Diary>,
@@ -44,18 +48,44 @@ export class DiaryService {
 				secretAccessKey: this.configService.get<string>('NCP_SECRET_KEY')
 			}
 		});
+		this.isDevEnvironment = this.configService.get<string>('NODE_ENV') === 'dev';
+		this.localImagePath = path.join(__dirname, '..', '..', 'uploads', 'images');
+		if (this.isDevEnvironment && !fs.existsSync(this.localImagePath)) {
+			fs.mkdirSync(this.localImagePath, { recursive: true });
+		}
 	}
 
-	private async uploadImages(images: string[]): Promise<string[]> {
-		const uploadPromises = images.map(async (base64Image, index) => {
-			const buffer = Buffer.from(base64Image.split(',')[1], 'base64');
-			const key = `diary-images/${Date.now()}-${index}.jpg`;
+	private async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
+		if (this.isDevEnvironment) {
+			return this.uploadImagesToLocal(files);
+		} else {
+			return this.uploadImagesToS3(files);
+		}
+	}
+
+	private async uploadImagesToLocal(files: Express.Multer.File[]): Promise<string[]> {
+		const uploadPromises = files.map(async (file, index) => {
+			const fileName = `${Date.now()}-${index}.${file.originalname.split('.').pop()}`;
+			const filePath = path.join(this.localImagePath, fileName);
+
+			await fs.promises.writeFile(filePath, file.buffer);
+
+			return `/uploads/images/${fileName}`;
+		});
+
+		return Promise.all(uploadPromises);
+	}
+
+	private async uploadImagesToS3(files: Express.Multer.File[]): Promise<string[]> {
+		const uploadPromises = files.map(async (file, index) => {
+			const key = `diary-images/${Date.now()}-${index}.${file.originalname.split('.').pop()}`;
 
 			const command = new PutObjectCommand({
 				Bucket: this.bucketName,
 				Key: key,
-				Body: buffer,
-				ContentType: 'image/jpeg'
+				Body: file.buffer,
+				ACL: 'public-read',
+				ContentType: file.mimetype
 			});
 
 			await this.s3Client.send(command);
@@ -66,26 +96,69 @@ export class DiaryService {
 		return Promise.all(uploadPromises);
 	}
 
-	async create(userId: string, body: DiaryCreateDto): Promise<DiaryCreateDto> {
+	private async deleteImages(imageUrls: string[]): Promise<void> {
+		if (this.isDevEnvironment) {
+			await this.deleteImagesFromLocal(imageUrls);
+		} else {
+			await this.deleteImagesFromS3(imageUrls);
+		}
+	}
+
+	private async deleteImagesFromLocal(imageUrls: string[]): Promise<void> {
+		for (const url of imageUrls) {
+			const filePath = path.join(this.localImagePath, path.basename(url));
+			if (fs.existsSync(filePath)) {
+				await fs.promises.unlink(filePath);
+			}
+		}
+	}
+
+	private async deleteImagesFromS3(imageUrls: string[]): Promise<void> {
+		for (const url of imageUrls) {
+			const key = url.split('/').pop();
+			if (key) {
+				try {
+					await this.s3Client.send(
+						new DeleteObjectCommand({
+							Bucket: this.bucketName,
+							Key: key
+						})
+					);
+				} catch (error) {
+					console.error(`Failed to delete image from S3: ${key}`, error);
+				}
+			}
+		}
+	}
+
+	async create(
+		userId: string,
+		body: DiaryCreateDto,
+		files?: Express.Multer.File[]
+	): Promise<Diary> {
 		try {
-			//upload
-			const imageUrls = await this.uploadImages(body.imageBox || []);
-			//create
+			let imageUrls: string[] = [];
+			if (files && files.length > 0) {
+				imageUrls = await this.uploadImages(files);
+			}
+
 			const createdDiary = await this.diaryModel.create({
 				...body,
 				userId: userId,
 				imageBox: imageUrls
 			});
-			//external ai service (fire and forget)
+
 			this.analyzeAndSaveDiaryMetadata(userId, createdDiary._id, body.content).catch(
 				error => {
 					console.error('Failed to analyze diary:', error);
 				}
 			);
-			//instantly return
-			return createdDiary.readOnlyData;
+
+			return createdDiary;
 		} catch (e) {
-			throw new InternalServerErrorException('An unexpected error occurred');
+			throw new InternalServerErrorException(
+				'An unexpected error occurred while creating the diary'
+			);
 		}
 	}
 
@@ -94,15 +167,21 @@ export class DiaryService {
 		query: DiaryFindDto
 	): Promise<{ items: Diary[]; total: number; page: number; limit: number }> {
 		try {
-			const { year, month, page, limit } = query;
+			const { year, month, page, limit, isPublic } = query;
 			const findOption: DiaryFindOption = { userId: userId };
 			const sortOption: SortOption = { date: -1 };
+
 			if (year && month) {
 				const startDate = new Date(year, month - 1, 1);
 				const endDate = new Date(year, month, 0);
 				findOption.date = { $gte: startDate, $lte: endDate };
 				sortOption.date = 1;
 			}
+
+			if (isPublic !== undefined) {
+				findOption.isPublic = isPublic;
+			}
+
 			const skip = (page - 1) * limit;
 			const [items, total] = await Promise.all([
 				this.diaryModel.find(findOption).sort(sortOption).skip(skip).limit(limit).exec(),
@@ -123,9 +202,8 @@ export class DiaryService {
 		}
 	}
 
-	async update(userId: string, id: string, body: DiaryUpdateDto) {
+	async update(userId: string, id: string, body: DiaryUpdateDto, files?: Express.Multer.File[]) {
 		try {
-			//original chk
 			const originalDiary = await this.diaryModel.findOne({ _id: id, userId: userId }).exec();
 			if (!originalDiary) {
 				throw new NotFoundException(
@@ -133,30 +211,24 @@ export class DiaryService {
 				);
 			}
 
-			// 업데이트할 필드 준비
 			const updateFields: Partial<DiaryUpdateDto> = {};
 
-			// 이미지 처리
-			if (body.imageBox) {
+			if (files && files.length > 0) {
 				try {
-					// 기존 이미지 삭제
 					await this.deleteImages(originalDiary.imageBox);
-					// 새 이미지 업로드
-					const newImageUrls = await this.uploadImages(body.imageBox);
-					updateFields.imageBox = newImageUrls;
+					const newImageUrls = await this.uploadImages(files);
+					updateFields.imageBox = newImageUrls; // 여기서 string[]을 저장
 				} catch (error) {
 					throw new InternalServerErrorException('Failed to process images');
 				}
 			}
 
-			// 다른 필드들 처리
 			for (const [key, value] of Object.entries(body)) {
 				if (key !== 'imageBox' && value !== undefined) {
 					updateFields[key] = value;
 				}
 			}
 
-			// 다이어리 업데이트
 			const updatedDiary = await this.diaryModel
 				.findOneAndUpdate(
 					{ _id: id, userId: userId },
@@ -165,34 +237,18 @@ export class DiaryService {
 				)
 				.exec();
 
-			//update metadata (only case content changed)
 			if (body.content && body.content !== originalDiary.content) {
 				this.analyzeAndSaveDiaryMetadata(userId, id, body.content).catch(error => {
 					console.error('Failed to update diary metadata:', error);
 				});
 			}
+
 			return updatedDiary;
 		} catch (e) {
 			if (e instanceof HttpException) throw e;
-			throw new InternalServerErrorException('An unexpected error occurred');
-		}
-	}
-
-	private async deleteImages(imageUrls: string[]): Promise<void> {
-		for (const url of imageUrls) {
-			const key = url.split('/').pop();
-			if (key) {
-				try {
-					await this.s3Client.send(
-						new DeleteObjectCommand({
-							Bucket: this.bucketName,
-							Key: key
-						})
-					);
-				} catch (error) {
-					console.error(`Failed to delete image: ${key}`, error);
-				}
-			}
+			throw new InternalServerErrorException(
+				'An unexpected error occurred while updating the diary'
+			);
 		}
 	}
 
@@ -219,11 +275,6 @@ export class DiaryService {
 			if (e instanceof HttpException) throw e;
 			throw new InternalServerErrorException('An unexpected error occurred');
 		}
-	}
-
-	//case user deleted
-	async deleteAllByUserId(userId: string, session?: ClientSession): Promise<void> {
-		await this.diaryModel.deleteMany({ userId }).session(session).exec();
 	}
 
 	private async analyzeAndSaveDiaryMetadata(
