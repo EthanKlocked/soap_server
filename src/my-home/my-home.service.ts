@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { MyHome } from './schema/my-home.schema';
+import { MyHome, CategoryType } from './schema/my-home.schema';
 import { CreateMyHomeDto } from './dto/my-home.create.dto';
 import { UpdateMyHomeDto } from './dto/my-home.update.dto';
 
@@ -14,11 +14,13 @@ export class MyHomeService {
 		return createdMyHome.save();
 	}
 
-	async findAll(userId?: string): Promise<MyHome[]> {
-		if (userId) {
-			return this.myHomeModel.find({ userId }).exec();
-		}
-		return this.myHomeModel.find().exec();
+	async findAll(userId: string, category?: CategoryType): Promise<MyHome[]> {
+		const query = {
+			...{ userId },
+			...(category && { category })
+		};
+
+		return this.myHomeModel.find(query).exec();
 	}
 
 	async findOne(id: string): Promise<MyHome> {
