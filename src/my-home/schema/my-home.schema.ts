@@ -17,7 +17,7 @@ export enum CategoryType {
 export type RatingType = 0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 3.5 | 4 | 4.5 | 5;
 
 type MovieContent = {
-	imageUrl: string;
+	imageUrl?: string;
 	title: string;
 	director: string;
 	releaseDate: string;
@@ -28,7 +28,7 @@ type MovieContent = {
 };
 
 type MusicContent = {
-	imageUrl: string;
+	imageUrl?: string;
 	title: string;
 	artist: string;
 };
@@ -38,11 +38,11 @@ type YoutubeContent = {
 	channelName: string;
 	url: string;
 	publishedAt: string;
-	thumbnailUrl: string;
+	thumbnailUrl?: string;
 };
 
 type BookContent = {
-	imageUrl: string;
+	imageUrl?: string;
 	title: string;
 	author: string;
 	publisher: string;
