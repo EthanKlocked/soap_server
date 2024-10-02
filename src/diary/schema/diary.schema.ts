@@ -7,6 +7,36 @@ const options: SchemaOptions = {
 	versionKey: false
 };
 
+export enum ReactionType {
+	Best = 'best',
+	Funny = 'funny',
+	Touching = 'touching',
+	Good = 'good',
+	Empathy = 'empathy',
+	Sad = 'sad',
+	Angry = 'angry',
+	Amazing = 'amazing',
+	Support = 'support',
+	Cheer = 'cheer'
+}
+
+export type ReactionMap = {
+	[key in ReactionType]: string[]; // Array of user ids for each reaction type
+};
+
+const defaultReactions: ReactionMap = {
+	[ReactionType.Best]: [],
+	[ReactionType.Funny]: [],
+	[ReactionType.Touching]: [],
+	[ReactionType.Good]: [],
+	[ReactionType.Empathy]: [],
+	[ReactionType.Sad]: [],
+	[ReactionType.Angry]: [],
+	[ReactionType.Amazing]: [],
+	[ReactionType.Support]: [],
+	[ReactionType.Cheer]: []
+};
+
 @Schema(options)
 export class Diary extends Document {
 	@Prop({
@@ -59,6 +89,9 @@ export class Diary extends Document {
 	})
 	isPublic: boolean;
 
+	@Prop({ type: Object, default: defaultReactions })
+	reactions: ReactionMap;
+
 	@Prop({
 		type: mongoose.Schema.Types.ObjectId,
 		ref: 'User',
@@ -75,6 +108,7 @@ export class Diary extends Document {
 		imageBox: string[];
 		detailedEmotions: string[];
 		isPublic: boolean;
+		reactions: ReactionMap;
 	};
 }
 
@@ -89,7 +123,8 @@ DiarySchema.virtual('readOnlyData').get(function (this: Diary) {
 		imageBox: this.imageBox,
 		coreEmotion: this.coreEmotion,
 		detailedEmotions: this.detailedEmotions,
-		isPublic: this.isPublic
+		isPublic: this.isPublic,
+		reactions: this.reactions
 	};
 });
 

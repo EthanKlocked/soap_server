@@ -23,7 +23,8 @@ import {
 	ApiSecurity,
 	ApiOperation,
 	ApiConsumes,
-	ApiBody
+	ApiBody,
+	ApiParam
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
@@ -31,8 +32,10 @@ import { DiaryService } from '@src/diary/diary.service';
 import { DiaryCreateDto } from '@src/diary/dto/diary.create.dto';
 import { DiaryUpdateDto } from '@src/diary/dto/diary.update.dto';
 import { DiaryFindDto } from '@src/diary/dto/diary.find.dto';
+import { DiaryReactionDto } from '@src/diary/dto/diary.reaction.dto';
 import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
+import { ReactionType } from '@src/diary/schema/diary.schema';
 
 @UseGuards(ApiGuard, JwtAuthGuard)
 @Controller('diary')
@@ -109,6 +112,47 @@ export class DiaryController {
 	})
 	async findAll(@Request() req, @Query() query: DiaryFindDto) {
 		return this.diaryService.findAll(req.user.id, query);
+	}
+
+	@Get('friend/:friendId')
+	@ApiOperation({
+		summary: 'Retrieve targeted user diary list',
+		description: 'Fetches a list of friend diaries. Can be filtered by year, month, etc.'
+	})
+	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiQuery({ name: 'page', required: false, type: Number, description: '페이지 번호' })
+	@ApiQuery({ name: 'limit', required: false, type: Number, description: '페이지당 항목 수' })
+	@ApiQuery({ name: 'year', required: false, type: Number, description: '조회할 연도' })
+	@ApiQuery({ name: 'month', required: false, type: Number, description: '조회할 월' })
+	async findFriendDiaries(
+		@Request() req,
+		@Param('friendId') targetUserId: string,
+		@Query() query: DiaryFindDto
+	) {
+		query.isPublic = true;
+		return this.diaryService.findAll(targetUserId, query);
+	}
+
+	@Post('reaction/:id')
+	@ApiOperation({ summary: 'Toggle reaction on a diary' })
+	@ApiParam({ name: 'id', description: 'Diary ID' })
+	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiResponse({ status: 404, description: 'Diary not found' })
+	@ApiBody({
+		type: DiaryReactionDto,
+		description: 'Reaction to toggle',
+		schema: {
+			properties: {
+				reactionType: {
+					enum: Object.values(ReactionType),
+					description: 'Available reaction types',
+					example: 'best'
+				}
+			}
+		}
+	})
+	async toggleReaction(@Request() req, @Param('id') id: string, @Body() body: DiaryReactionDto) {
+		return this.diaryService.toggleReaction(req.user.id, id, body.reactionType);
 	}
 
 	@Post()

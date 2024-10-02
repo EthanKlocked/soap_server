@@ -19,6 +19,7 @@ import { ClientSession } from 'mongoose';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
+import { ReactionType } from '@src/diary/schema/diary.schema';
 
 @Injectable()
 export class DiaryService {
@@ -304,6 +305,37 @@ export class DiaryService {
 			);
 		} catch (error) {
 			console.error('Error during diary analysis:', error);
+		}
+	}
+
+	async toggleReaction(
+		userId: string,
+		diaryId: string,
+		reactionType: ReactionType
+	): Promise<Diary> {
+		try {
+			const diary = await this.diaryModel.findById(diaryId);
+			if (!diary) {
+				throw new NotFoundException('Diary not found');
+			}
+
+			const reactionArray = diary.reactions[reactionType];
+			const userIndex = reactionArray.indexOf(userId);
+
+			if (userIndex > -1) {
+				// User has already reacted, so remove the reaction
+				reactionArray.splice(userIndex, 1);
+			} else {
+				// User hasn't reacted, so add the reaction
+				reactionArray.push(userId);
+			}
+			diary.markModified('reactions');
+
+			await diary.save();
+			return diary;
+		} catch (e) {
+			if (e instanceof HttpException) throw e;
+			throw new InternalServerErrorException('An unexpected error occurred');
 		}
 	}
 
