@@ -1,16 +1,18 @@
 import { IsString, IsEnum, IsObject, IsMongoId, ValidateNested } from 'class-validator';
-import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { CategoryType, ContentType, RatingType } from '../schema/my-home.schema';
+import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { CategoryType, RatingType, ContentType } from '../schema/my-home.schema';
 
-class MovieContentDto {
-	@ApiProperty({ example: 'https://example.com/movie.jpg' })
-	@IsString()
-	imageUrl: string;
-
-	@ApiProperty({ example: '인셉션' })
+class BaseContentDto {
+	@ApiProperty({ example: '컨텐츠 제목' })
 	@IsString()
 	title: string;
+}
+
+class MovieContentDto extends BaseContentDto {
+	@ApiProperty({ example: 'https://example.com/movie.jpg', required: false })
+	@IsString()
+	imageUrl?: string;
 
 	@ApiProperty({ example: '크리스토퍼 놀란' })
 	@IsString()
@@ -37,25 +39,17 @@ class MovieContentDto {
 	rating: RatingType;
 }
 
-class MusicContentDto {
-	@ApiProperty({ example: 'https://example.com/album.jpg' })
+class MusicContentDto extends BaseContentDto {
+	@ApiProperty({ example: 'https://example.com/album.jpg', required: false })
 	@IsString()
-	imageUrl: string;
+	imageUrl?: string;
 
-	@ApiProperty({ example: 'Dynamite' })
-	@IsString()
-	title: string;
-
-	@ApiProperty({ example: 'BTS' })
+	@ApiProperty({ example: 'Cool Channel' })
 	@IsString()
 	artist: string;
 }
 
-class YoutubeContentDto {
-	@ApiProperty({ example: 'Amazing Video' })
-	@IsString()
-	title: string;
-
+class YoutubeContentDto extends BaseContentDto {
 	@ApiProperty({ example: 'Cool Channel' })
 	@IsString()
 	channelName: string;
@@ -68,19 +62,15 @@ class YoutubeContentDto {
 	@IsString()
 	publishedAt: string;
 
-	@ApiProperty({ example: 'https://img.youtube.com/vi/dQw4w9WgXcQ/default.jpg' })
+	@ApiProperty({ example: 'https://img.youtube.com/vi/dQw4w9WgXcQ/default.jpg', required: false })
 	@IsString()
-	thumbnailUrl: string;
+	thumbnailUrl?: string;
 }
 
-class BookContentDto {
-	@ApiProperty({ example: 'https://example.com/book.jpg' })
+class BookContentDto extends BaseContentDto {
+	@ApiProperty({ example: 'https://example.com/book.jpg', required: false })
 	@IsString()
-	imageUrl: string;
-
-	@ApiProperty({ example: '1984' })
-	@IsString()
-	title: string;
+	imageUrl?: string;
 
 	@ApiProperty({ example: 'George Orwell' })
 	@IsString()
@@ -107,20 +97,20 @@ export class CreateMyHomeDto {
 	@ApiProperty({
 		enum: CategoryType,
 		example: CategoryType.MOVIE,
-		description: '카테고리 타입'
+		description: '컨텐츠의 카테고리 타입'
 	})
 	@IsEnum(CategoryType)
 	category: CategoryType;
 
 	@ApiProperty({
 		example: '정말 재미있는 영화였습니다. 강력 추천합니다!',
-		description: '리뷰 내용'
+		description: '사용자의 리뷰 내용'
 	})
 	@IsString()
 	review: string;
 
 	@ApiProperty({
-		description: '컨텐츠 정보',
+		description: '컨텐츠의 상세 정보. 카테고리에 따라 다른 구조를 가집니다.',
 		oneOf: [
 			{ $ref: getSchemaPath(MovieContentDto) },
 			{ $ref: getSchemaPath(MusicContentDto) },
@@ -130,16 +120,18 @@ export class CreateMyHomeDto {
 	})
 	@IsObject()
 	@ValidateNested()
-	@Type(() => Object, {
-		keepDiscriminatorProperty: true,
-		discriminator: {
-			property: 'category',
-			subTypes: [
-				{ value: MovieContentDto, name: CategoryType.MOVIE },
-				{ value: MusicContentDto, name: CategoryType.MUSIC },
-				{ value: YoutubeContentDto, name: CategoryType.YOUTUBE },
-				{ value: BookContentDto, name: CategoryType.BOOK }
-			]
+	@Type(obj => {
+		switch (obj.object.category) {
+			case CategoryType.MOVIE:
+				return MovieContentDto;
+			case CategoryType.MUSIC:
+				return MusicContentDto;
+			case CategoryType.YOUTUBE:
+				return YoutubeContentDto;
+			case CategoryType.BOOK:
+				return BookContentDto;
+			default:
+				return BaseContentDto;
 		}
 	})
 	content: ContentType;

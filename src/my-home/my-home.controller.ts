@@ -78,17 +78,6 @@ export class MyHomeController {
 					type: 'string',
 					format: 'date-time',
 					example: '2024-10-01T09:00:00.000Z'
-				},
-				readOnlyData: {
-					type: 'object',
-					properties: {
-						id: { type: 'string', example: '507f1f77bcf86cd799439011' },
-						category: {
-							type: 'string',
-							enum: Object.values(CategoryType),
-							example: CategoryType.MOVIE
-						}
-					}
 				}
 			}
 		}
@@ -140,17 +129,6 @@ export class MyHomeController {
 						type: 'string',
 						format: 'date-time',
 						example: '2024-10-01T09:00:00.000Z'
-					},
-					readOnlyData: {
-						type: 'object',
-						properties: {
-							id: { type: 'string', example: '507f1f77bcf86cd799439011' },
-							category: {
-								type: 'string',
-								enum: Object.values(CategoryType),
-								example: CategoryType.MUSIC
-							}
-						}
 					}
 				}
 			}
