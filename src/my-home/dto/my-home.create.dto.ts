@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsObject, IsMongoId, ValidateNested } from 'class-validator';
+import { IsString, IsEnum, IsObject, IsMongoId, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
 import { CategoryType, RatingType, ContentType } from '../schema/my-home.schema';
@@ -11,6 +11,7 @@ class BaseContentDto {
 
 class MovieContentDto extends BaseContentDto {
 	@ApiProperty({ example: 'https://example.com/movie.jpg', required: false })
+	@IsOptional()
 	@IsString()
 	imageUrl?: string;
 
@@ -41,6 +42,7 @@ class MovieContentDto extends BaseContentDto {
 
 class MusicContentDto extends BaseContentDto {
 	@ApiProperty({ example: 'https://example.com/album.jpg', required: false })
+	@IsOptional()
 	@IsString()
 	imageUrl?: string;
 
@@ -63,12 +65,14 @@ class YoutubeContentDto extends BaseContentDto {
 	publishedAt: string;
 
 	@ApiProperty({ example: 'https://img.youtube.com/vi/dQw4w9WgXcQ/default.jpg', required: false })
+	@IsOptional()
 	@IsString()
 	thumbnailUrl?: string;
 }
 
 class BookContentDto extends BaseContentDto {
 	@ApiProperty({ example: 'https://example.com/book.jpg', required: false })
+	@IsOptional()
 	@IsString()
 	imageUrl?: string;
 
