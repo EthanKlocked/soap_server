@@ -17,7 +17,7 @@ import { ApiGuard } from '@src/auth/guard/api.guard';
 import { MyHomeService } from './my-home.service';
 import { CreateMyHomeDto } from './dto/my-home.create.dto';
 import { UpdateMyHomeDto } from './dto/my-home.update.dto';
-import { CategoryType } from './schema/my-home.schema';
+import { CategoryType, ContentType } from './schema/my-home.schema';
 
 @ApiBearerAuth()
 @UseGuards(ApiGuard, JwtAuthGuard)
@@ -177,7 +177,7 @@ export class MyHomeController {
 	async update(
 		@Request() req,
 		@Param('id') id: string,
-		@Body() updateMyHomeDto: UpdateMyHomeDto
+		@Body() updateMyHomeDto: UpdateMyHomeDto | Partial<ContentType>
 	) {
 		const myHome = await this.myHomeService.findOne(id);
 		if (myHome.userId.toString() !== req.user.id) {

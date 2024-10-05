@@ -31,14 +31,36 @@ export class MyHomeService {
 		return myHome;
 	}
 
-	async update(id: string, updateMyHomeDto: UpdateMyHomeDto): Promise<MyHome> {
-		const updatedMyHome = await this.myHomeModel
-			.findByIdAndUpdate(id, { $set: updateMyHomeDto }, { new: true })
-			.exec();
+	async update(
+		id: string,
+		updateMyHomeDto: UpdateMyHomeDto | Partial<MyHome['content']>
+	): Promise<MyHome> {
+		const existingMyHome = await this.myHomeModel.findById(id).exec();
 
-		if (!updatedMyHome) {
+		if (!existingMyHome) {
 			throw new NotFoundException(`MyHome with ID "${id}" not found`);
 		}
+
+		// 최상위 레벨 필드 업데이트
+		if ('review' in updateMyHomeDto) {
+			existingMyHome.review = updateMyHomeDto.review;
+		}
+
+		// content 필드 업데이트
+		if ('content' in updateMyHomeDto && updateMyHomeDto.content) {
+			existingMyHome.content = {
+				...existingMyHome.content,
+				...updateMyHomeDto.content
+			};
+		} else if (!('review' in updateMyHomeDto)) {
+			// updateMyHomeDto가 Partial<MyHome['content']>인 경우
+			existingMyHome.content = {
+				...existingMyHome.content,
+				...updateMyHomeDto
+			};
+		}
+
+		const updatedMyHome = await existingMyHome.save();
 		return updatedMyHome;
 	}
 
