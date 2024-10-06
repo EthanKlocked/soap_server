@@ -1,4 +1,4 @@
-import { IsString, IsBoolean, IsOptional } from 'class-validator';
+import { IsString, IsBoolean, IsOptional, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class UserUpdateDto {
@@ -29,4 +29,15 @@ export class UserUpdateDto {
 		required: false
 	})
 	imgUrl?: string;
+
+	@IsString()
+	@IsOptional()
+	@MaxLength(60)
+	@ApiProperty({
+		description: 'User status',
+		example: 'Working on a new project',
+		required: false,
+		maxLength: 60
+	})
+	status?: string;
 }

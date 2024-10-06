@@ -12,6 +12,7 @@ import { Model, isValidObjectId, Types } from 'mongoose';
 import { FriendRequest } from '@src/friend/schema/friendRequest.schema';
 import { Friendship } from '@src/friend/schema/friendship.schema';
 import { BlockedUser } from '@src/user/schema/blockedUser.schema';
+import { User } from '@src/user/schema/user.schema';
 import { UserService } from '@src/user/user.service';
 
 @Injectable()
@@ -20,8 +21,9 @@ export class FriendService {
 		@InjectModel(FriendRequest.name) private friendRequestModel: Model<FriendRequest>,
 		@InjectModel(Friendship.name) private friendshipModel: Model<Friendship>,
 		@InjectModel(BlockedUser.name) private blockedUserModel: Model<BlockedUser>,
+		@InjectModel(User.name) private userModel: Model<User>,
 		private userService: UserService
-	) {}
+	) { }
 
 	async areFriends(user1Id: string, user2Id: string): Promise<boolean> {
 		try {
@@ -190,13 +192,27 @@ export class FriendService {
 			const blockedUsers = await this.blockedUserModel
 				.find({ userId })
 				.distinct('blockedUserId');
-			const friends = await this.friendshipModel
+			const friendships = await this.friendshipModel
 				.find({
 					$or: [{ user1Id: userId }, { user2Id: userId }],
 					$and: [{ user1Id: { $nin: blockedUsers } }, { user2Id: { $nin: blockedUsers } }]
 				})
+				.lean()
 				.exec();
-			return friends;
+			const friendsWithDetails = await Promise.all(friendships.map(async (friendship) => {
+				const friendId = friendship.user1Id.toString() === userId
+					? friendship.user2Id
+					: friendship.user1Id;
+				const friendDetails = await this.userModel.findById(friendId)
+					.select('name email imgUrl status')
+					.lean()
+					.exec();
+				return {
+					...friendship,
+					friend: friendDetails
+				};
+			}));
+			return friendsWithDetails;
 		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');
 		}

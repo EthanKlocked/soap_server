@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsEmail, IsNotEmpty, IsString, IsBoolean } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsBoolean, MaxLength, IsOptional } from 'class-validator';
 import { Document, SchemaOptions } from 'mongoose';
 
 const options: SchemaOptions = {
@@ -44,6 +44,15 @@ export class User extends Document {
 	@Prop()
 	@IsString()
 	imgUrl?: string;
+
+	@Prop({
+		maxlength: 60,
+		default: null
+	})
+	@IsString()
+	@IsOptional()
+	@MaxLength(60)
+	status?: string;
 
 	readonly readOnlyData: {
 		id: string;

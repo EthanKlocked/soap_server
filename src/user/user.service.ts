@@ -40,15 +40,15 @@ export class UserService /*implements OnModuleInit*/ {
 		@InjectModel(DiaryAnalysis.name) private diaryAnalysisModel: Model<DiaryAnalysis>,
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
 		private readonly emailService: EmailService
-	) {}
+	) { }
 	/* ######### OPTIONAL #########
-    async onModuleInit() {
-        await this.addNewField();
-    }
-    async addNewField() {
-        await this.userModel.updateMany({ refresh: { $exists: false } }, { $set: { refresh: null } });
-    } 
-    */
+	async onModuleInit() {
+		await this.addNewField();
+	}
+	async addNewField() {
+		await this.userModel.updateMany({ refresh: { $exists: false } }, { $set: { refresh: null } });
+	} 
+	*/
 
 	async findAll() {
 		try {
@@ -133,6 +133,9 @@ export class UserService /*implements OnModuleInit*/ {
 			if (updateInfo.name) updateFields.name = updateInfo.name;
 			if (updateInfo.alarm !== undefined) updateFields.alarm = updateInfo.alarm;
 			if (updateInfo.imgUrl) updateFields.imgUrl = updateInfo.imgUrl;
+			if (updateInfo.status !== undefined) {
+				updateFields.status = updateInfo.status === '' ? null : updateInfo.status;
+			}
 
 			//update start
 			const updatedUser = await this.userModel
