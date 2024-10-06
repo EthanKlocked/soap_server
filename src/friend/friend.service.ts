@@ -23,7 +23,7 @@ export class FriendService {
 		@InjectModel(BlockedUser.name) private blockedUserModel: Model<BlockedUser>,
 		@InjectModel(User.name) private userModel: Model<User>,
 		private userService: UserService
-	) { }
+	) {}
 
 	async areFriends(user1Id: string, user2Id: string): Promise<boolean> {
 		try {
@@ -199,19 +199,23 @@ export class FriendService {
 				})
 				.lean()
 				.exec();
-			const friendsWithDetails = await Promise.all(friendships.map(async (friendship) => {
-				const friendId = friendship.user1Id.toString() === userId
-					? friendship.user2Id
-					: friendship.user1Id;
-				const friendDetails = await this.userModel.findById(friendId)
-					.select('name email imgUrl status')
-					.lean()
-					.exec();
-				return {
-					...friendship,
-					friend: friendDetails
-				};
-			}));
+			const friendsWithDetails = await Promise.all(
+				friendships.map(async friendship => {
+					const friendId =
+						friendship.user1Id.toString() === userId
+							? friendship.user2Id
+							: friendship.user1Id;
+					const friendDetails = await this.userModel
+						.findById(friendId)
+						.select('name email imgUrl status')
+						.lean()
+						.exec();
+					return {
+						...friendship,
+						friend: friendDetails
+					};
+				})
+			);
 			return friendsWithDetails;
 		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');

@@ -40,7 +40,7 @@ export class UserService /*implements OnModuleInit*/ {
 		@InjectModel(DiaryAnalysis.name) private diaryAnalysisModel: Model<DiaryAnalysis>,
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
 		private readonly emailService: EmailService
-	) { }
+	) {}
 	/* ######### OPTIONAL #########
 	async onModuleInit() {
 		await this.addNewField();
