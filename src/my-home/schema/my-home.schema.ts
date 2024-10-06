@@ -63,7 +63,7 @@ export class MyHome extends Document {
 	category: CategoryType;
 
 	@Prop({
-		required: true
+		required: false
 	})
 	review: string;
 

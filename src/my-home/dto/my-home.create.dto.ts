@@ -110,8 +110,9 @@ export class CreateMyHomeDto {
 		example: '정말 재미있는 영화였습니다. 강력 추천합니다!',
 		description: '사용자의 리뷰 내용'
 	})
+	@IsOptional()
 	@IsString()
-	review: string;
+	review?: string;
 
 	@ApiProperty({
 		description: '컨텐츠의 상세 정보. 카테고리에 따라 다른 구조를 가집니다.',
