@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsNumber, IsBoolean } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ItemDto {
@@ -24,20 +24,9 @@ export class ItemDto {
 	y: number;
 
 	@ApiProperty({
-		example: 1,
-		description: '아이템의 Z-index (겹침 순서)',
-		required: false
+		example: true,
+		description: '아이템 노출/비노출'
 	})
-	@IsNumber()
-	@IsOptional()
-	zIndex?: number;
-
-	@ApiProperty({
-		example:
-			'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==',
-		description: '아이템 이미지의 Base64 인코딩 문자열'
-	})
-	@IsString()
-	@MaxLength(5 * 1024 * 1024)
-	imageBase64: string;
+	@IsBoolean()
+	visible: boolean;
 }
