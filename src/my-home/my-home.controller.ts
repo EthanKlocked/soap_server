@@ -160,7 +160,7 @@ export class MyHomeController {
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
-	async create(@Request() req, @Body() createMyHomeDto: CreateMyHomeDto) {
+	async create(@Request() req, @Body() createMyHomeDto: Omit<CreateMyHomeDto, 'userId'>) {
 		return this.myHomeService.create({
 			...createMyHomeDto,
 			userId: req.user.id
