@@ -10,7 +10,7 @@ import { ItemDto } from './dto/room-items.dto';
 export class RoomService {
 	constructor(@InjectModel(Room.name) private roomModel: Model<Room>) {}
 
-	async create(userId: string, createRoomDto: CreateRoomDto): Promise<Room> {
+	async create(userId: string, createRoomDto: Omit<CreateRoomDto, 'userId'>): Promise<Room> {
 		return this.roomModel
 			.findOneAndUpdate({ userId }, { ...createRoomDto, userId }, { new: true, upsert: true })
 			.exec();
@@ -24,15 +24,34 @@ export class RoomService {
 		return room;
 	}
 
-	async update(userId: string, updateRoomDto: UpdateRoomDto): Promise<Room> {
-		const updatedRoom = await this.roomModel
-			.findOneAndUpdate({ userId }, { $set: updateRoomDto }, { new: true })
-			.exec();
+	async update(userId: string, updateDto: UpdateRoomDto | ItemDto): Promise<Room> {
+		const room = await this.roomModel.findOne({ userId }).exec();
 
-		if (!updatedRoom) {
+		if (!room) {
 			throw new NotFoundException(`Room for user "${userId}" not found`);
 		}
-		return updatedRoom;
+
+		if (isUpdateRoomDto(updateDto)) {
+			updateDto.items.forEach(newItem => {
+				const index = room.items.findIndex(item => item.name === newItem.name);
+				if (index !== -1) {
+					room.items[index] = { ...room.items[index], ...newItem };
+				} else {
+					room.items.push(newItem);
+				}
+			});
+		} else {
+			const index = room.items.findIndex(item => item.name === updateDto.name);
+			if (index !== -1) {
+				room.items[index] = { ...room.items[index], ...updateDto };
+			} else {
+				room.items.push(updateDto);
+			}
+		}
+
+		await room.save();
+
+		return room;
 	}
 
 	async remove(userId: string): Promise<Room> {
@@ -42,41 +61,8 @@ export class RoomService {
 		}
 		return deletedRoom;
 	}
+}
 
-	async addItem(userId: string, itemDto: ItemDto): Promise<Room> {
-		const room = await this.roomModel
-			.findOneAndUpdate({ userId }, { $push: { items: itemDto } }, { new: true })
-			.exec();
-
-		if (!room) {
-			throw new NotFoundException(`Room for user "${userId}" not found`);
-		}
-		return room;
-	}
-
-	async updateItem(userId: string, itemId: string, itemDto: ItemDto): Promise<Room> {
-		const room = await this.roomModel
-			.findOneAndUpdate(
-				{ userId, 'items.id': itemId },
-				{ $set: { 'items.$': itemDto } },
-				{ new: true }
-			)
-			.exec();
-
-		if (!room) {
-			throw new NotFoundException(`Room for user "${userId}" or item "${itemId}" not found`);
-		}
-		return room;
-	}
-
-	async removeItem(userId: string, itemId: string): Promise<Room> {
-		const room = await this.roomModel
-			.findOneAndUpdate({ userId }, { $pull: { items: { id: itemId } } }, { new: true })
-			.exec();
-
-		if (!room) {
-			throw new NotFoundException(`Room for user "${userId}" not found`);
-		}
-		return room;
-	}
+function isUpdateRoomDto(dto: UpdateRoomDto | ItemDto): dto is UpdateRoomDto {
+	return 'items' in dto && Array.isArray(dto.items);
 }

@@ -10,9 +10,6 @@ const options: SchemaOptions = {
 @Schema(options)
 class Item {
 	@Prop({ required: true })
-	id: string;
-
-	@Prop({ required: true })
 	name: string;
 
 	@Prop({ required: true, type: Number })
@@ -21,11 +18,8 @@ class Item {
 	@Prop({ required: true, type: Number })
 	y: number;
 
-	@Prop({ type: Number, default: 0 })
-	zIndex: number;
-
-	@Prop({ required: true })
-	imageUrl: string;
+	@Prop({ required: true, type: Boolean, default: true })
+	visible: boolean;
 }
 
 @Schema(options)
@@ -37,14 +31,8 @@ export class Room extends Document {
 	})
 	userId: mongoose.Types.ObjectId;
 
-	@Prop({ required: true })
-	name: string;
-
 	@Prop({ type: [Item], default: [] })
 	items: Item[];
-
-	@Prop({ type: String, default: null })
-	wallpaper: string;
 
 	readonly readOnlyData: {
 		id: string;
@@ -56,8 +44,7 @@ export const RoomSchema = SchemaFactory.createForClass(Room);
 
 RoomSchema.virtual('readOnlyData').get(function (this: Room) {
 	return {
-		id: this._id,
-		name: this.name
+		id: this._id
 	};
 });
 
