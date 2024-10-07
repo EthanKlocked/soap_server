@@ -11,7 +11,14 @@ import {
 	ForbiddenException,
 	Query
 } from '@nestjs/common';
-import { ApiResponse, ApiBearerAuth, ApiQuery, ApiSecurity, ApiOperation } from '@nestjs/swagger';
+import {
+	ApiResponse,
+	ApiBearerAuth,
+	ApiQuery,
+	ApiSecurity,
+	ApiOperation,
+	ApiBody
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 import { MyHomeService } from './my-home.service';
@@ -166,6 +173,7 @@ export class MyHomeController {
 		description:
 			'지정된 ID의 MyHome 컨텐츠 정보를 수정합니다. 해당 MyHome 컨텐츠의 소유자만 수정할 수 있습니다.'
 	})
+	@ApiBody({ type: UpdateMyHomeDto, description: 'MyHome 업데이트 정보' })
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({
