@@ -156,6 +156,9 @@ export class MyHomeController {
 		description:
 			'새로운 MyHome 컨텐츠 정보를 생성합니다. 현재 로그인한 사용자의 ID가 자동으로 할당됩니다.'
 	})
+	@ApiBody({
+		type: CreateMyHomeDto
+	})
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
