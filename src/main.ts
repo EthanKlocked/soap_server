@@ -21,11 +21,13 @@ async function bootstrap() {
 
 	app.use(json({ limit: '50mb' }));
 	app.use(urlencoded({ limit: '50mb', extended: true }));
+	/* need to chk if file size limit be required for multi form image dataset..
 	app.use(
 		multer({
 			limits: { fileSize: 50 * 1024 * 1024 }
 		}).any()
 	);
+	*/
 
 	app.useGlobalPipes(
 		new ValidationPipe({

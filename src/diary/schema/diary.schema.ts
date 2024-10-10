@@ -1,40 +1,17 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaOptions } from 'mongoose';
 import * as mongoose from 'mongoose';
+import {
+	validEmotionList,
+	ValidEmotion,
+	ReactionMap,
+	defaultReactions
+} from '@src/diary/diary.interface';
+import { BadRequestException } from '@nestjs/common';
 
 const options: SchemaOptions = {
 	timestamps: true,
 	versionKey: false
-};
-
-export enum ReactionType {
-	Best = 'best',
-	Funny = 'funny',
-	Touching = 'touching',
-	Good = 'good',
-	Empathy = 'empathy',
-	Sad = 'sad',
-	Angry = 'angry',
-	Amazing = 'amazing',
-	Support = 'support',
-	Cheer = 'cheer'
-}
-
-export type ReactionMap = {
-	[key in ReactionType]: string[]; // Array of user ids for each reaction type
-};
-
-const defaultReactions: ReactionMap = {
-	[ReactionType.Best]: [],
-	[ReactionType.Funny]: [],
-	[ReactionType.Touching]: [],
-	[ReactionType.Good]: [],
-	[ReactionType.Empathy]: [],
-	[ReactionType.Sad]: [],
-	[ReactionType.Angry]: [],
-	[ReactionType.Amazing]: [],
-	[ReactionType.Support]: [],
-	[ReactionType.Cheer]: []
 };
 
 @Schema(options)
@@ -79,7 +56,26 @@ export class Diary extends Document {
 
 	@Prop({
 		type: [String],
-		validate: [{ validator: (val: string[]) => val.length <= 12 }]
+		required: true,
+		validate: [
+			{
+				validator: (val: string[]) => {
+					//need to chk the exception message does not arrived at client side
+					if (
+						!val.every((emotion: string) =>
+							validEmotionList.includes(emotion as ValidEmotion)
+						)
+					) {
+						throw new BadRequestException('Invalid emotion(s) detected');
+					}
+					if (new Set(val).size !== val.length) {
+						throw new BadRequestException('Duplicate emotions are not allowed');
+					}
+					return true;
+				},
+				message: 'Validation failed for detailedEmotions'
+			}
+		]
 	})
 	detailedEmotions: string[];
 
@@ -106,7 +102,7 @@ export class Diary extends Document {
 		content: string;
 		coreEmotion: number;
 		imageBox: string[];
-		detailedEmotions: string[];
+		detailedEmotions: ValidEmotion[];
 		isPublic: boolean;
 		reactions: ReactionMap;
 	};

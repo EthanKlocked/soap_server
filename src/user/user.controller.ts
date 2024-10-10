@@ -26,7 +26,6 @@ import { ApiGuard } from '@src/auth/guard/api.guard';
 
 @UseGuards(ApiGuard)
 @Controller('user')
-@ApiTags('user')
 @ApiSecurity('api-key')
 @ApiResponse({ status: 400, description: 'Request without API KEY' })
 @ApiResponse({ status: 403, description: 'Invalid API KEY' })
@@ -34,77 +33,11 @@ import { ApiGuard } from '@src/auth/guard/api.guard';
 export class UserController {
 	constructor(private readonly userService: UserService) {}
 
-	@Get()
-	@ApiOperation({
-		summary: 'Find Every Users Info',
-		description: 'get every users information for test environment'
-	})
-	@ApiResponse({ status: 200, description: 'Success' })
-	async findAll() {
-		return await this.userService.findAll();
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@Get('profile')
-	@ApiOperation({
-		summary: 'Get user info',
-		description: 'get profile information from accessToken inserted in cookies'
-	})
-	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
-	@ApiResponse({ status: 410, description: 'Token has expired' })
-	async getProfile(@Request() req) {
-		return req.user;
-	}
-
-	@UseGuards(SnsAuthGuard)
-	@Post('sns-login')
-	@ApiOperation({
-		summary: 'SNS Login',
-		description: 'Login or register a user using SNS credentials'
-	})
-	@ApiBody({ type: UserSnsDto })
-	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 401, description: 'Unauthorized sns' })
-	async snsLogin(@Request() req, @Res({ passthrough: true }) response) {
-		const { access: accessToken, refresh: refreshToken } = req.user;
-		response.cookie('access_token', accessToken, { httpOnly: false });
-		response.cookie('refresh_token', refreshToken, { httpOnly: false });
-		return { message: 'SNS login successful' };
-	}
-
-	@Post()
-	@ApiOperation({
-		summary: 'Add new user',
-		description: 'create new user data in server database'
-	})
-	@ApiBody({ type: UserSignupDto })
-	@ApiResponse({ status: 201, description: 'Success' })
-	@ApiResponse({ status: 408, description: 'Not verified or time expired' })
-	@ApiResponse({ status: 409, description: 'The user already exists' })
-	async signUp(@Body() body: UserSignupDto) {
-		return await this.userService.signUp(body);
-	}
-
-	@UseGuards(JwtAuthGuard)
-	@Patch()
-	@ApiOperation({
-		summary: 'Update user info',
-		description: 'update user info in server database'
-	})
-	@ApiBody({ type: UserUpdateDto })
-	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 404, description: 'User not found' })
-	async update(@Request() req, @Body() updateInfo: UserUpdateDto) {
-		const targetId: string = req.user.id;
-		return await this.userService.update(targetId, updateInfo);
-	}
-
+	@ApiTags('User-Auth')
 	@Post('email')
 	@ApiOperation({
 		summary: 'Send verification email',
-		description:
-			'send a verifcation email which would be 6digits for <email> value as the target'
+		description: 'Sends a 6-digit verification code to the specified email address'
 	})
 	@ApiBody({ type: EmailRequestDto })
 	@ApiResponse({ status: 201, description: 'Success' })
@@ -112,11 +45,11 @@ export class UserController {
 		return await this.userService.sendVerification(body);
 	}
 
+	@ApiTags('User-Auth')
 	@Post('verify')
 	@ApiOperation({
-		summary: 'Verify digit code',
-		description:
-			'Check if the verificationCode value is same with the code server sent and cached for limited time'
+		summary: 'Verify email code',
+		description: 'Validates the 6-digit verification code sent to the email'
 	})
 	@ApiBody({ type: UserVerifyDto })
 	@ApiResponse({ status: 201, description: 'Success' })
@@ -126,12 +59,27 @@ export class UserController {
 		return await this.userService.verify(body);
 	}
 
+	@ApiTags('User-Auth')
+	@Post()
+	@ApiOperation({
+		summary: 'Register new user',
+		description: 'Creates a new user account after email verification'
+	})
+	@ApiBody({ type: UserSignupDto })
+	@ApiResponse({ status: 201, description: 'Success' })
+	@ApiResponse({ status: 408, description: 'Not verified or time expired' })
+	@ApiResponse({ status: 409, description: 'The user already exists' })
+	async signUp(@Body() body: UserSignupDto) {
+		return await this.userService.signUp(body);
+	}
+
+	@ApiTags('User-Auth')
 	@UseGuards(LocalAuthGuard)
 	@Post('login')
 	@ApiOperation({
-		summary: 'Login',
+		summary: 'User login',
 		description:
-			'Login with body information including e-mail and password and issue accessToken if request would be validate.'
+			'Authenticates user with email and password, and issues access&refresh token set'
 	})
 	@ApiBody({ type: UserLoginDto })
 	@ApiResponse({ status: 201, description: 'Success' })
@@ -144,11 +92,29 @@ export class UserController {
 		return 'success';
 	}
 
+	@ApiTags('User-Auth')
+	@UseGuards(SnsAuthGuard)
+	@Post('sns-login')
+	@ApiOperation({
+		summary: 'SNS Login',
+		description: 'Authenticates or registers a user using SNS credentials'
+	})
+	@ApiBody({ type: UserSnsDto })
+	@ApiResponse({ status: 201, description: 'Success' })
+	@ApiResponse({ status: 401, description: 'Unauthorized sns' })
+	async snsLogin(@Request() req, @Res({ passthrough: true }) response) {
+		const { access: accessToken, refresh: refreshToken } = req.user;
+		response.cookie('access_token', accessToken, { httpOnly: false });
+		response.cookie('refresh_token', refreshToken, { httpOnly: false });
+		return { message: 'SNS login successful' };
+	}
+
+	@ApiTags('User-Auth')
 	@UseGuards(RefreshGuard)
 	@Post('refresh')
 	@ApiOperation({
-		summary: 'Refresh',
-		description: 'Refresh access token in case previous access token is expired.'
+		summary: 'Refresh access token',
+		description: 'Issues a new access token using the refresh token'
 	})
 	@ApiResponse({
 		status: 201,
@@ -173,19 +139,68 @@ export class UserController {
 		}
 	}
 
+	@ApiTags('User-Auth')
+	@UseGuards(JwtAuthGuard)
 	@Post('logout')
+	@ApiOperation({
+		summary: 'User logout',
+		description: 'Logs out the user and invalidates the current session'
+	})
 	@ApiResponse({ status: 201, description: 'Success' })
+	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+	@ApiResponse({ status: 410, description: 'Token has expired' })
 	async logout(@Res({ passthrough: true }) response) {
 		response.clearCookie('access_token');
 		response.clearCookie('refresh_token');
 		return 'success';
 	}
 
+	@ApiTags('User-Info')
+	@Get()
+	@ApiOperation({
+		summary: 'Get all users',
+		description: 'Retrieves information of all users (for testing purposes only)'
+	})
+	@ApiResponse({ status: 200, description: 'Success' })
+	async findAll() {
+		return await this.userService.findAll();
+	}
+
+	@ApiTags('User-Info')
+	@UseGuards(JwtAuthGuard)
+	@Get('profile')
+	@ApiOperation({
+		summary: 'Get user profile',
+		description: 'Retrieves the profile information of the authenticated user'
+	})
+	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+	@ApiResponse({ status: 410, description: 'Token has expired' })
+	async getProfile(@Request() req) {
+		return req.user;
+	}
+
+	@ApiTags('User-Management')
+	@UseGuards(JwtAuthGuard)
+	@Patch()
+	@ApiOperation({
+		summary: 'Update user info',
+		description: 'Updates the profile information of the authenticated user'
+	})
+	@ApiBody({ type: UserUpdateDto })
+	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiResponse({ status: 404, description: 'User not found' })
+	async update(@Request() req, @Body() updateInfo: UserUpdateDto) {
+		const targetId: string = req.user.id;
+		return await this.userService.update(targetId, updateInfo);
+	}
+
+	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Delete('delete')
 	@ApiOperation({
-		summary: 'Delete',
-		description: 'Delete a user by their ID from token validated'
+		summary: 'Delete user account',
+		description: "Permanently deletes the authenticated user's account"
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
@@ -198,22 +213,13 @@ export class UserController {
 		return await this.userService.delete(targetId);
 	}
 
-	@UseGuards(JwtAuthGuard)
-	@Get('ctoken')
-	@ApiOperation({
-		summary: 'Get',
-		description: 'Request to get the specific token for connecting to chat server'
-	})
-	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
-	@ApiResponse({ status: 410, description: 'Token has expired' })
-	async ctoken(@Request() req) {
-		return req.cookies['access_token'];
-	}
-
+	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Post('block')
-	@ApiOperation({ summary: 'Block a user', description: 'Block a user by their ID' })
+	@ApiOperation({
+		summary: 'Block a user',
+		description: 'Blocks a specified user, preventing interactions'
+	})
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({
 		status: 400,
@@ -230,11 +236,12 @@ export class UserController {
 		return this.userService.blockUser(req.user.id, userToBlockId);
 	}
 
+	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Delete('unblock/:blockedUserId')
 	@ApiOperation({
 		summary: 'Unblock a user',
-		description: 'Unblock a previously blocked user by their ID'
+		description: 'Removes the block restriction on a previously blocked user'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
@@ -243,16 +250,31 @@ export class UserController {
 		return this.userService.unblockUser(req.user.id, blockedUserId);
 	}
 
+	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Get('is-blocked/:targetUserId')
 	@ApiOperation({
-		summary: 'Check if a user is blocked',
-		description: 'Check if the current user has blocked the specified target user'
+		summary: 'Check block status',
+		description: 'Checks if a specified user is blocked by the authenticated user'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
 	@ApiResponse({ status: 410, description: 'Token has expired' })
 	async isUserBlocked(@Request() req, @Param('targetUserId') targetUserId: string) {
 		return this.userService.isUserBlocked(req.user.id, targetUserId);
+	}
+
+	@ApiTags('User-Extra')
+	@UseGuards(JwtAuthGuard)
+	@Get('ctoken')
+	@ApiOperation({
+		summary: 'Get chat token',
+		description: 'Retrieves the token required for connecting to the chat server'
+	})
+	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+	@ApiResponse({ status: 410, description: 'Token has expired' })
+	async ctoken(@Request() req) {
+		return req.cookies['access_token'];
 	}
 }

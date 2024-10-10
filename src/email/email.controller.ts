@@ -4,7 +4,7 @@ import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 
 @Controller('email')
-@ApiTags('email')
+@ApiTags('Email-Private')
 @ApiResponse({ status: 500, description: 'Server Error' })
 export class EmailController {
 	constructor(private readonly mailService: EmailService) {}

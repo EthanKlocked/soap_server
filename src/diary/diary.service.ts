@@ -19,7 +19,7 @@ import { ClientSession } from 'mongoose';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
-import { ReactionType } from '@src/diary/schema/diary.schema';
+import { ReactionType } from '@src/diary/diary.interface';
 
 @Injectable()
 export class DiaryService {

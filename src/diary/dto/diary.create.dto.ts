@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { validEmotionList } from '@src/diary/diary.interface';
 
 export class DiaryCreateDto {
 	@ApiProperty({ example: '오늘의 일기', description: '일기 제목' })
@@ -52,7 +53,10 @@ export class DiaryCreateDto {
 	@Transform(({ value }) => Number(value))
 	coreEmotion: number;
 
-	@ApiProperty({ example: ['행복', '기쁨', '설렘'], description: '상세 감정 키워드 목록' })
+	@ApiProperty({
+		example: validEmotionList,
+		description: '상세 감정 키워드 목록'
+	})
 	@IsArray()
 	@IsString({ each: true })
 	@ArrayMaxSize(12)
