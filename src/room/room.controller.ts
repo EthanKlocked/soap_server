@@ -10,7 +10,15 @@ import {
 	Param,
 	NotFoundException
 } from '@nestjs/common';
-import { ApiResponse, ApiBearerAuth, ApiSecurity, ApiOperation, ApiParam } from '@nestjs/swagger';
+import {
+	ApiResponse,
+	ApiBearerAuth,
+	ApiSecurity,
+	ApiOperation,
+	ApiParam,
+	ApiBody,
+	getSchemaPath
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 import { RoomService } from './room.service';
@@ -52,6 +60,9 @@ export class RoomController {
 		summary: '방 꾸미기 구현',
 		description: '내 방 꾸미기. 현재 로그인한 사용자의 ID가 자동으로 할당됩니다.'
 	})
+	@ApiBody({
+		type: CreateRoomDto
+	})
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
@@ -64,6 +75,23 @@ export class RoomController {
 	@ApiOperation({
 		summary: '내 방 데이터 수정',
 		description: '내 방을 수정할 수 있습니다.'
+	})
+	@ApiBody({
+		description: 'item리스트 혹은 하나의 객체 형태로 보낼 수 있음',
+		schema: {
+			oneOf: [
+				{ $ref: getSchemaPath(ItemDto) },
+				{
+					type: 'object',
+					properties: {
+						items: {
+							type: 'array',
+							items: { $ref: getSchemaPath(ItemDto) }
+						}
+					}
+				}
+			]
+		}
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
