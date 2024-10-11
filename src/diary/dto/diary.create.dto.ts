@@ -9,26 +9,44 @@ import {
 	IsNumber,
 	IsBoolean,
 	Min,
-	Max
+	Max,
+	ArrayUnique,
+	Validate
 } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { validEmotionList } from '@src/diary/diary.interface';
+import { validEmotionList, ValidEmotion } from '@src/diary/diary.interface';
+import {
+	ValidatorConstraint,
+	ValidatorConstraintInterface,
+	ValidationArguments
+} from 'class-validator';
+
+@ValidatorConstraint({ name: 'isValidEmotion', async: false })
+export class IsValidEmotion implements ValidatorConstraintInterface {
+	validate(emotion: string, args: ValidationArguments) {
+		return validEmotionList.includes(emotion as ValidEmotion);
+	}
+
+	defaultMessage(args: ValidationArguments) {
+		return `${args.value} is not a valid emotion`;
+	}
+}
 
 export class DiaryCreateDto {
-	@ApiProperty({ example: '오늘의 일기', description: '일기 제목' })
+	@ApiProperty({ example: 'Diary of the special day', description: 'Diary title' })
 	@IsNotEmpty()
 	@IsString()
 	@MaxLength(65)
 	title: string;
 
-	@ApiProperty({ example: '2023-05-20', description: '일기 작성 날짜' })
+	@ApiProperty({ example: '2023-05-20', description: 'Date of diary entry' })
 	@IsNotEmpty()
 	@IsDate()
 	@Type(() => Date)
 	date: Date;
 
-	@ApiProperty({ example: '오늘은 정말 좋은 날이었다.', description: '일기 내용' })
+	@ApiProperty({ example: 'Today was a really good day.', description: 'Diary text content' })
 	@IsNotEmpty()
 	@IsString()
 	@MaxLength(2000)
@@ -38,14 +56,14 @@ export class DiaryCreateDto {
 		type: 'array',
 		items: { type: 'string', format: 'binary' },
 		required: false,
-		description: '이미지 파일 배열 (각 이미지 최대 5MB, 최대 5개)'
+		description: 'Array of image files (max 5MB each, up to 5 images)'
 	})
 	@IsOptional()
 	@ArrayMaxSize(5)
 	//imageBox?: Express.Multer.File[];
 	imageBox?: any[];
 
-	@ApiProperty({ example: 4, description: '핵심 감정 점수 (1-5)' })
+	@ApiProperty({ example: 4, description: 'Core emotion score (1-5)' })
 	@IsNotEmpty()
 	@IsNumber()
 	@Min(1)
@@ -55,15 +73,27 @@ export class DiaryCreateDto {
 
 	@ApiProperty({
 		example: validEmotionList,
-		description: '상세 감정 키워드 목록'
+		description: 'List of detailed emotion keywords'
+	})
+	@Transform(({ value }) => {
+		if (value === undefined || value === '') {
+			return [];
+		}
+		if (Array.isArray(value)) {
+			return value;
+		}
+		return [value];
 	})
 	@IsArray()
-	@IsString({ each: true })
+	@ArrayUnique()
 	@ArrayMaxSize(12)
-	detailedEmotions: string[];
+	@IsString({ each: true })
+	@Validate(IsValidEmotion, { each: true })
+	detailedEmotions: ValidEmotion[];
 
-	@ApiProperty({ example: true, required: false, description: '공개 여부' })
+	@ApiProperty({ example: true, required: false, description: 'Public option' })
 	@IsOptional()
 	@IsBoolean()
+	@Type(() => Boolean)
 	isPublic?: boolean;
 }

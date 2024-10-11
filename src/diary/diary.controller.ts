@@ -116,7 +116,7 @@ export class DiaryController {
 	@ApiOperation({
 		summary: 'Update a diary',
 		description:
-			'Updates an existing diary entry, including text content and images. Every fields are same with CREATE api but optinal'
+			'Updates an existing diary entry, including text content and images. Every fields are same with CREATE api but optional'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 404, description: 'User not found or not permitted to update' })

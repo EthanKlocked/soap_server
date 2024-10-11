@@ -1,13 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaOptions } from 'mongoose';
 import * as mongoose from 'mongoose';
-import {
-	validEmotionList,
-	ValidEmotion,
-	ReactionMap,
-	defaultReactions
-} from '@src/diary/diary.interface';
-import { BadRequestException } from '@nestjs/common';
+import { ReactionMap, defaultReactions } from '@src/diary/diary.interface';
 
 const options: SchemaOptions = {
 	timestamps: true,
@@ -56,26 +50,7 @@ export class Diary extends Document {
 
 	@Prop({
 		type: [String],
-		required: true,
-		validate: [
-			{
-				validator: (val: string[]) => {
-					//need to chk the exception message does not arrived at client side
-					if (
-						!val.every((emotion: string) =>
-							validEmotionList.includes(emotion as ValidEmotion)
-						)
-					) {
-						throw new BadRequestException('Invalid emotion(s) detected');
-					}
-					if (new Set(val).size !== val.length) {
-						throw new BadRequestException('Duplicate emotions are not allowed');
-					}
-					return true;
-				},
-				message: 'Validation failed for detailedEmotions'
-			}
-		]
+		required: true
 	})
 	detailedEmotions: string[];
 
@@ -102,7 +77,7 @@ export class Diary extends Document {
 		content: string;
 		coreEmotion: number;
 		imageBox: string[];
-		detailedEmotions: ValidEmotion[];
+		detailedEmotions: string[];
 		isPublic: boolean;
 		reactions: ReactionMap;
 	};
