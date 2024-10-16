@@ -77,6 +77,17 @@ export class UserService /*implements OnModuleInit*/ {
 		}
 	}
 
+	async findProfile(id: string) {
+		try {
+			const user = await this.userModel.findById(id).exec();
+			if (!user) throw new NotFoundException(`User with ID "${id}" not found`);
+			return user.readOnlyData;
+		} catch (e) {
+			if (e instanceof HttpException) throw e;
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
+
 	async userExists(userId: string): Promise<boolean> {
 		const user = await this.userModel.findById(userId).exec();
 		return !!user;

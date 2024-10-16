@@ -58,6 +58,10 @@ export class User extends Document {
 		id: string;
 		email: string;
 		name: string;
+		alarm: string;
+		sns: string;
+		imgUrl: string;
+		status: string;
 	};
 }
 
@@ -67,6 +71,10 @@ UserSchema.virtual('readOnlyData').get(function (this: User) {
 	return {
 		id: this._id,
 		email: this.email,
-		name: this.name
+		name: this.name,
+		alarm: this.alarm,
+		sns: this.sns,
+		imgUrl: this.imgUrl,
+		status: this.status
 	};
 });

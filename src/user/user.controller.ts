@@ -175,9 +175,10 @@ export class UserController {
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+	@ApiResponse({ status: 404, description: 'User not found' })
 	@ApiResponse({ status: 410, description: 'Token has expired' })
 	async getProfile(@Request() req) {
-		return req.user;
+		return await this.userService.findProfile(req.user.id);
 	}
 
 	@ApiTags('User-Management')
