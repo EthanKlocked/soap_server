@@ -1,6 +1,7 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
+// LOCAL SIGN UP
 export class UserSignupDto {
 	@IsEmail()
 	@IsNotEmpty()
@@ -16,4 +17,18 @@ export class UserSignupDto {
 	@IsNotEmpty()
 	@ApiProperty({ description: 'name', example: 'ethank' })
 	name: string;
+}
+
+// SNS SIGN UP
+export enum SnsType {
+	KAKAO = 'kakao',
+	GOOGLE = 'google',
+	APPLE = 'apple'
+}
+
+export class UserSnsSignupDto extends UserSignupDto {
+	@IsEnum(SnsType)
+	@IsNotEmpty()
+	@ApiProperty({ description: 'SNS type', enum: SnsType, example: SnsType.KAKAO })
+	sns: SnsType;
 }

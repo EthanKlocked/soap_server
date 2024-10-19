@@ -11,18 +11,27 @@ import {
 	Patch
 } from '@nestjs/common';
 import { UserService } from '@src/user/user.service';
-import { UserSignupDto } from '@src/user/dto/user.signup.dto';
+import { UserSignupDto, UserSnsSignupDto } from '@src/user/dto/user.signup.dto';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
-import { ApiTags, ApiOperation, ApiBody, ApiResponse, ApiSecurity } from '@nestjs/swagger';
+import {
+	ApiTags,
+	ApiOperation,
+	ApiBody,
+	ApiResponse,
+	ApiSecurity,
+	ApiParam
+} from '@nestjs/swagger';
 import { LocalAuthGuard } from '@src/auth/guard/local.guard';
 import { RefreshGuard } from '@src/auth/guard/refresh.guard';
 import { SnsAuthGuard } from '@src/auth/guard/sns.guard';
 import { UserLoginDto } from '@src/user/dto/user.login.dto';
 import { UserUpdateDto } from '@src/user/dto/user.update.dto';
-import { UserSnsDto } from '@src/user/dto/user.sns.dto';
+import { UserSnsLoginDto } from './dto/user.snsLogin.dto';
+import { UserBlockDto } from '@src/user/dto/user.block.dto';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
+import { SnsValidationResultCase } from '@src/auth/auth.interface';
 
 @UseGuards(ApiGuard)
 @Controller('user')
@@ -97,16 +106,45 @@ export class UserController {
 	@Post('sns-login')
 	@ApiOperation({
 		summary: 'SNS Login',
-		description: 'Authenticates or registers a user using SNS credentials'
+		description: `Authenticates SNS credentials.
+	
+	Response:
+	The response will contain a 'resultCase' field indicating one of three scenarios:
+	
+	1. LOGIN: User successfully logged in
+	   - Includes 'access' and 'refresh' tokens
+	
+	2. JOIN: User needs to register
+	   - Includes a temporary 'password'
+	
+	3. SNS: A different SNS account exists for this email
+	   - Includes the 'existingSns' type
+	
+	Note: Status code 201 is returned for all successful scenarios.`
 	})
-	@ApiBody({ type: UserSnsDto })
+	@ApiBody({ type: UserSnsLoginDto })
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({ status: 401, description: 'Unauthorized sns' })
 	async snsLogin(@Request() req, @Res({ passthrough: true }) response) {
-		const { access: accessToken, refresh: refreshToken } = req.user;
-		response.cookie('access_token', accessToken, { httpOnly: false });
-		response.cookie('refresh_token', refreshToken, { httpOnly: false });
-		return { message: 'SNS login successful' };
+		const result = req.user;
+		if (result.resultCase === SnsValidationResultCase.LOGIN) {
+			response.cookie('access_token', result.access, { httpOnly: false });
+			response.cookie('refresh_token', result.refresh, { httpOnly: false });
+		}
+		return result;
+	}
+
+	@ApiTags('User-Auth')
+	@Post('sns-signup')
+	@ApiOperation({
+		summary: 'Register new user with SNS',
+		description: 'Creates a new user account with SNS information'
+	})
+	@ApiBody({ type: UserSnsSignupDto })
+	@ApiResponse({ status: 201, description: 'Success' })
+	@ApiResponse({ status: 409, description: 'The user already exists' })
+	async snsSignUp(@Body() body: UserSnsSignupDto) {
+		return await this.userService.snsSignUp(body);
 	}
 
 	@ApiTags('User-Auth')
@@ -233,8 +271,8 @@ export class UserController {
 		status: 409,
 		description: 'Conflict: User is already blocked or you cannot block yourself'
 	})
-	async blockUser(@Request() req, @Body('userToBlockId') userToBlockId: string) {
-		return this.userService.blockUser(req.user.id, userToBlockId);
+	async blockUser(@Request() req, @Body() blockData: UserBlockDto) {
+		return this.userService.blockUser(req.user.id, blockData.userToBlockId);
 	}
 
 	@ApiTags('User-Management')
@@ -244,6 +282,7 @@ export class UserController {
 		summary: 'Unblock a user',
 		description: 'Removes the block restriction on a previously blocked user'
 	})
+	@ApiParam({ name: 'blockedUserId', type: 'string', description: 'ID of the user to unblock' })
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
 	@ApiResponse({ status: 404, description: 'User not found' })
@@ -257,6 +296,11 @@ export class UserController {
 	@ApiOperation({
 		summary: 'Check block status',
 		description: 'Checks if a specified user is blocked by the authenticated user'
+	})
+	@ApiParam({
+		name: 'targetUserId',
+		type: 'string',
+		description: 'ID of the user to check if blocked'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })

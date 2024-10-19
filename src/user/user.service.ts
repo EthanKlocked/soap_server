@@ -12,7 +12,7 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '@src/user/schema/user.schema';
 import { Model } from 'mongoose';
-import { UserSignupDto } from '@src/user/dto/user.signup.dto';
+import { UserSignupDto, UserSnsSignupDto } from '@src/user/dto/user.signup.dto';
 import { UserUpdateDto } from '@src/user/dto/user.update.dto';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
@@ -131,6 +131,25 @@ export class UserService /*implements OnModuleInit*/ {
 			//join start
 			const user = await this.createUser(email, name, password);
 			return user.readOnlyData;
+		} catch (e) {
+			if (e instanceof HttpException) throw e; //controlled
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
+
+	async snsSignUp(snsSignupDto: UserSnsSignupDto): Promise<User> {
+		try {
+			const { email, password, name, sns } = snsSignupDto;
+			const existingUser = await this.userModel.findOne({ email });
+			if (existingUser) throw new ConflictException('The user already exists');
+			const hashedPassword = await bcrypt.hash(password, 10);
+			const newUser = new this.userModel({
+				email,
+				password: hashedPassword,
+				name,
+				sns
+			});
+			return newUser.save();
 		} catch (e) {
 			if (e instanceof HttpException) throw e; //controlled
 			throw new InternalServerErrorException('An unexpected error occurred');

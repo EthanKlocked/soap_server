@@ -2,7 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { UserService } from '@src/user/user.service';
 import { compare } from 'bcryptjs';
 import { UserLoginDto } from '@src/user/dto/user.login.dto';
-import { Payload } from '@src/auth/auth.interface';
+import {
+	Payload,
+	SnsValidationInput,
+	SnsValidationResult,
+	SnsValidationResultCase
+} from '@src/auth/auth.interface';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
@@ -18,6 +23,7 @@ export class AuthService {
 		const option: object = { email: body.email };
 		const user = await this.userService.findOne(option);
 		if (!user) return null;
+		if (user.sns != 'local') return null;
 		if (!(await compare(body.password, user.password))) return null;
 		return await this.userService.findById(user.id);
 	}
@@ -35,31 +41,34 @@ export class AuthService {
 		});
 	}
 
-	async validateSns(body: {
-		email: string;
-		name: string;
-		sns: string;
-	}): Promise<{ id: string; email: string }> {
-		// token validation
+	async validateSns(body: SnsValidationInput): Promise<SnsValidationResult> {
+		// TOKEN VALIDATION
 		// 예: await this.validateSnsToken(body.token, body.sns);
+		// IF FAILED CASE: FAIL
+		// throw new UnauthorizedException('invalid token');
 
-		// check email
 		const user = await this.userService.findOne({ email: body.email });
+		let result: SnsValidationResult = {
+			resultCase: SnsValidationResultCase.READY,
+			resultValue: ''
+		};
+
 		if (!user) {
-			console.log('SNS : Registering new user');
-			// Create new user
-			const newUser = await this.userService.createUser(
-				body.email,
-				body.name,
-				Math.random().toString(36).slice(-8),
-				body.sns
-			);
-			return { id: newUser._id.toString(), email: newUser.email };
+			// CASE : JOIN
+			result.resultCase = SnsValidationResultCase.JOIN;
+			result.resultValue = Math.random().toString(36).slice(-8);
 		} else {
-			console.log('SNS : User already exists login');
-			// 기존 사용자의 SNS 정보 업데이트가 필요한 경우 여기에 로직 추가
-			// 예: await this.userService.updateSnsInfo(user._id, body.sns);
-			return { id: user._id.toString(), email: user.email };
+			if (body.sns !== user.sns) {
+				// CASE : SNS
+				result.resultCase = SnsValidationResultCase.SNS;
+				result.resultValue = user.sns;
+			} else {
+				// CASE : LOGIN
+				result.resultCase = SnsValidationResultCase.LOGIN;
+				result.resultValue = 'success';
+				result.auth = { id: user._id.toString(), email: user.email };
+			}
 		}
+		return result;
 	}
 }
