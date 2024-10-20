@@ -20,6 +20,7 @@ import { generateRandomNumber } from '@src/lib/common';
 import { EmailService } from 'src/email/email.service';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
+import { UserBlockDto } from '@src/user/dto/user.block.dto';
 import { BlockedUser } from '@src/user/schema/blockedUser.schema';
 import { Friendship } from '@src/friend/schema/friendship.schema';
 import { FriendRequest } from '@src/friend/schema/friendRequest.schema';
@@ -253,8 +254,9 @@ export class UserService /*implements OnModuleInit*/ {
 		}
 	}
 
-	async blockUser(userId: string, userToBlockId: string): Promise<BlockedUser> {
+	async blockUser(userId: string, userBlockDto: UserBlockDto): Promise<BlockedUser> {
 		try {
+			const { userToBlockId, blockedReason } = userBlockDto;
 			if (!isValidObjectId(userToBlockId))
 				throw new BadRequestException('Invalid user ID format');
 			const userToBlock = await this.userModel.findById(userToBlockId);
@@ -268,7 +270,8 @@ export class UserService /*implements OnModuleInit*/ {
 			if (existingBlock) throw new ConflictException('User is already blocked');
 			const newBlock = new this.blockedUserModel({
 				userId,
-				blockedUserId: userToBlockId
+				blockedUserId: userToBlockId,
+				blockedReason: blockedReason || null
 			});
 			return newBlock.save();
 		} catch (e) {

@@ -48,6 +48,44 @@ export class DiaryController {
 		private readonly diaryAnalysisService: DiaryAnalysisService
 	) {}
 
+	@ApiTags('Diary-Analysis')
+	@Get('similar-users')
+	@ApiOperation({
+		summary: 'Get similar users',
+		description:
+			'Retrieves a list of users with similar diary entries based on content analysis'
+	})
+	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiQuery({
+		name: 'limit',
+		required: false,
+		type: Number,
+		description: 'Number of similar users to return'
+	})
+	@ApiQuery({
+		name: 'diaryId',
+		required: false,
+		type: String,
+		description: 'Specific diary ID to base similarity on'
+	})
+	async getSimilarUsers(
+		@Request() req,
+		@Query('limit') limit?: number,
+		@Query('diaryId') diaryId?: string
+	) {
+		return this.diaryAnalysisService.getSimilarUsers(req.user.id, limit, diaryId);
+	}
+
+	@ApiTags('Diary-Analysis')
+	@Get('metas') //for checking metas temporarily
+	@ApiOperation({
+		summary: 'Get all meta information',
+		description: 'Retrieves all meta information for diaries (for temporary checking purposes)'
+	})
+	async findAllMeta() {
+		return this.diaryService.findAllMeta();
+	}
+
 	@ApiTags('Diary-Management')
 	@Post()
 	@UseInterceptors(FileFieldsInterceptor([{ name: 'imageBox', maxCount: 5 }]))
@@ -143,44 +181,6 @@ export class DiaryController {
 	@ApiResponse({ status: 404, description: 'User not found or not permitted to delete' })
 	async delete(@Request() req, @Param('id') id: string) {
 		return this.diaryService.delete(req.user.id, id);
-	}
-
-	@ApiTags('Diary-Analysis')
-	@Get('similar-users')
-	@ApiOperation({
-		summary: 'Get similar users',
-		description:
-			'Retrieves a list of users with similar diary entries based on content analysis'
-	})
-	@ApiResponse({ status: 200, description: 'Success' })
-	@ApiQuery({
-		name: 'limit',
-		required: false,
-		type: Number,
-		description: 'Number of similar users to return'
-	})
-	@ApiQuery({
-		name: 'diaryId',
-		required: false,
-		type: String,
-		description: 'Specific diary ID to base similarity on'
-	})
-	async getSimilarUsers(
-		@Request() req,
-		@Query('limit') limit?: number,
-		@Query('diaryId') diaryId?: string
-	) {
-		return this.diaryAnalysisService.getSimilarUsers(req.user.id, limit, diaryId);
-	}
-
-	@ApiTags('Diary-Analysis')
-	@Get('metas') //for checking metas temporarily
-	@ApiOperation({
-		summary: 'Get all meta information',
-		description: 'Retrieves all meta information for diaries (for temporary checking purposes)'
-	})
-	async findAllMeta() {
-		return this.diaryService.findAllMeta();
 	}
 
 	@ApiTags('Diary-Interactions')

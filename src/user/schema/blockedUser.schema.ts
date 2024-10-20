@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { IsNotEmpty } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength, ValidateIf } from 'class-validator';
 import { Document, SchemaOptions } from 'mongoose';
 import { Types } from 'mongoose';
 
@@ -25,6 +25,16 @@ export class BlockedUser extends Document {
 	})
 	@IsNotEmpty()
 	blockedUserId: Types.ObjectId;
+
+	@Prop({
+		type: String,
+		required: false,
+		maxlength: 200
+	})
+	@ValidateIf((object, value) => value !== null)
+	@IsString()
+	@MaxLength(200)
+	blockedReason: string | null;
 }
 
 export const BlockedUserSchema = SchemaFactory.createForClass(BlockedUser);

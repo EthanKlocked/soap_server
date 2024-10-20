@@ -272,7 +272,7 @@ export class UserController {
 		description: 'Conflict: User is already blocked or you cannot block yourself'
 	})
 	async blockUser(@Request() req, @Body() blockData: UserBlockDto) {
-		return this.userService.blockUser(req.user.id, blockData.userToBlockId);
+		return this.userService.blockUser(req.user.id, blockData);
 	}
 
 	@ApiTags('User-Management')
