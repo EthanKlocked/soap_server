@@ -5,13 +5,15 @@ import { Diary } from '@src/diary/schema/diary.schema';
 import { DiaryAnalysis } from '@src/diary/schema/diaryAnalysis.schema';
 import { ClientSession } from 'mongoose';
 import { BlockedUser } from '@src/user/schema/blockedUser.schema';
+import { UserService } from '@src/user/user.service';
 
 @Injectable()
 export class DiaryAnalysisService {
 	constructor(
 		@InjectModel(Diary.name) private diaryModel: Model<Diary>,
 		@InjectModel(DiaryAnalysis.name) private diaryAnalysisModel: Model<DiaryAnalysis>,
-		@InjectModel(BlockedUser.name) private blockedUserModel: Model<BlockedUser>
+		@InjectModel(BlockedUser.name) private blockedUserModel: Model<BlockedUser>,
+		private readonly userService: UserService
 	) {}
 
 	async getSimilarUsers(userId: string, limit: number = 5, diaryId?: string): Promise<any[]> {
@@ -45,7 +47,23 @@ export class DiaryAnalysisService {
 				}
 			);
 
-			return similarityScores.sort((a, b) => b.score - a.score).slice(0, limit);
+			const topSimilarUsers = similarityScores
+				.sort((a, b) => b.score - a.score)
+				.slice(0, limit);
+
+			//return extra info added
+			const resultSimilarUsers = await Promise.all(
+				topSimilarUsers.map(async user => {
+					const userData = await this.userService.findProfile(user.userId);
+					return {
+						userId: user.userId,
+						userName: userData.name,
+						score: user.score
+					};
+				})
+			);
+
+			return resultSimilarUsers;
 		} catch (e) {
 			throw new InternalServerErrorException(
 				'An unexpected error occurred while getting similar users'
