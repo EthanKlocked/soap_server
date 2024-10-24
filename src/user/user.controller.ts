@@ -309,6 +309,20 @@ export class UserController {
 		return this.userService.isUserBlocked(req.user.id, targetUserId);
 	}
 
+	@ApiTags('User-Management')
+	@UseGuards(JwtAuthGuard)
+	@Get('blocked-users')
+	@ApiOperation({
+		summary: 'Get blocked users list',
+		description: 'Retrieves a list of all users blocked by the authenticated user'
+	})
+	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
+	@ApiResponse({ status: 410, description: 'Token has expired' })
+	async getBlockedUsers(@Request() req) {
+		return this.userService.getBlockedUsers(req.user.id);
+	}
+
 	@ApiTags('User-Extra')
 	@UseGuards(JwtAuthGuard)
 	@Get('ctoken')

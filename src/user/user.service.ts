@@ -306,4 +306,22 @@ export class UserService /*implements OnModuleInit*/ {
 			throw new InternalServerErrorException('An unexpected error occurred');
 		}
 	}
+
+	async getBlockedUsers(userId: string) {
+		try {
+			const blockedUsers = await this.blockedUserModel
+				.find({ userId })
+				.populate('blockedUserId', 'email name') // User 스키마에서 필요한 필드만 가져오기
+				.exec();
+
+			return blockedUsers.map(block => ({
+				id: block.blockedUserId._id,
+				email: block.blockedUserId['email'],
+				name: block.blockedUserId['name']
+			}));
+		} catch (e) {
+			if (e instanceof HttpException) throw e;
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
 }
