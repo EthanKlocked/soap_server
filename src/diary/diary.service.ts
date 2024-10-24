@@ -340,6 +340,67 @@ export class DiaryService {
 		}
 	}
 
+	async getMonthlyEmotionStats(userId: string, year: number, month: number) {
+		try {
+			const startDate = new Date(year, month - 1, 1);
+			const endDate = new Date(year, month, 0);
+
+			const diaries = await this.diaryModel
+				.find({
+					userId,
+					date: {
+						$gte: startDate,
+						$lte: endDate
+					}
+				})
+				.exec();
+
+			const coreEmotionTotals = diaries.reduce(
+				(acc, diary) => {
+					acc[diary.coreEmotion] = (acc[diary.coreEmotion] || 0) + 1;
+					return acc;
+				},
+				{} as { [key: number]: number }
+			);
+
+			const dailyEmotions = [];
+			for (let i = 1; i <= endDate.getDate(); i++) {
+				const dayDiaries = diaries.filter(diary => new Date(diary.date).getDate() === i);
+
+				const dayEmotions = dayDiaries.reduce(
+					(acc, diary) => {
+						acc[diary.coreEmotion] = (acc[diary.coreEmotion] || 0) + 1;
+						return acc;
+					},
+					{} as { [key: number]: number }
+				);
+
+				dailyEmotions.push({
+					date: i,
+					emotions: dayEmotions
+				});
+			}
+
+			const detailedEmotionTotals = diaries.reduce(
+				(acc, diary) => {
+					diary.detailedEmotions.forEach(emotion => {
+						acc[emotion] = (acc[emotion] || 0) + 1;
+					});
+					return acc;
+				},
+				{} as { [key: string]: number }
+			);
+
+			return {
+				totalCoreEmotions: coreEmotionTotals,
+				dailyEmotions: dailyEmotions,
+				totalDetailedEmotions: detailedEmotionTotals
+			};
+		} catch (e) {
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
+
 	//for checking meta temporarily
 	async findAllMeta() {
 		try {

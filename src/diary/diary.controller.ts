@@ -31,6 +31,7 @@ import { DiaryUpdateDto } from '@src/diary/dto/diary.update.dto';
 import { DiaryFindDto } from '@src/diary/dto/diary.find.dto';
 import { DiaryReactionDto } from '@src/diary/dto/diary.reaction.dto';
 import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
+import { DiaryStatsDto } from '@src/diary/dto/diary.stats.dto';
 import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ReactionType } from '@src/diary/diary.interface';
 
@@ -84,6 +85,20 @@ export class DiaryController {
 	})
 	async findAllMeta() {
 		return this.diaryService.findAllMeta();
+	}
+
+	@ApiTags('Diary-Analysis')
+	@Get('stats')
+	@ApiOperation({
+		summary: 'Get monthly emotion statistics',
+		description:
+			'Retrieves emotion statistics for a specific month including core emotions and detailed emotions counts'
+	})
+	@ApiQuery({ name: 'year', required: true, type: Number })
+	@ApiQuery({ name: 'month', required: true, type: Number })
+	@ApiResponse({ status: 200, description: 'Success' })
+	async getMonthlyEmotionStats(@Request() req, @Query() query: DiaryStatsDto) {
+		return this.diaryService.getMonthlyEmotionStats(req.user.id, query.year, query.month);
 	}
 
 	@ApiTags('Diary-Management')
