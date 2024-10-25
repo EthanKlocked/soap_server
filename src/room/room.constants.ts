@@ -16,28 +16,28 @@ export const DEFAULT_ROOM_ITEMS = [
 	{
 		name: 'music',
 		x: 10.67,
-		y: 17.99,
+		y: 18.0,
 		visible: true,
 		type: 'hobby'
 	},
 	{
 		name: 'picture',
-		x: 2.67,
-		y: 6.0,
+		x: 40.0,
+		y: 9.9,
 		visible: true,
 		type: 'interior'
 	},
 	{
 		name: 'plant',
-		x: 2.67,
-		y: 14.99,
+		x: 50.67,
+		y: 34.99,
 		visible: true,
 		type: 'interior'
 	},
 	{
 		name: 'sofa',
-		x: 2.67,
-		y: 14.99,
+		x: 66.67,
+		y: 29.99,
 		visible: true,
 		type: 'interior'
 	},
@@ -57,7 +57,7 @@ export const DEFAULT_ROOM_ITEMS = [
 	},
 	{
 		name: 'youtube',
-		x: 4.0,
+		x: 40.0,
 		y: 24.89,
 		visible: true,
 		type: 'hobby'
