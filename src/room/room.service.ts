@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Room } from './schema/room.schema';
 import { CreateRoomDto } from './dto/room.create.dto';
 import { UpdateRoomDto } from './dto/room.update.dto';
 import { ItemDto } from './dto/room-items.dto';
+import { DEFAULT_ROOM_ITEMS } from './room.constants';
 
 @Injectable()
 export class RoomService {
@@ -16,11 +17,17 @@ export class RoomService {
 			.exec();
 	}
 
-	async findByUserId(userId: string): Promise<Room> {
-		const room = await this.roomModel.findOne({ userId }).exec();
+	async findByUserId(userId: string) {
+		const room = await this.roomModel.findOne({ userId: new Types.ObjectId(userId) });
+
 		if (!room) {
-			throw new NotFoundException(`Room for user "${userId}" not found`);
+			// 방이 없을 때 기본값 리턴
+			return new this.roomModel({
+				userId: new Types.ObjectId(userId),
+				items: DEFAULT_ROOM_ITEMS
+			});
 		}
+
 		return room;
 	}
 
