@@ -20,6 +20,9 @@ class Item {
 
 	@Prop({ required: true, type: Boolean, default: true })
 	visible: boolean;
+
+	@Prop({ required: true, type: String })
+	type: 'hobby' | 'interior';
 }
 
 @Schema(options)

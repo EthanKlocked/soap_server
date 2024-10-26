@@ -29,4 +29,10 @@ export class ItemDto {
 	})
 	@IsBoolean()
 	visible: boolean;
+
+	@ApiProperty({
+		example: 'hobby',
+		description: 'hobby인 경우 움직일 수 있고, interior는 움직일 수 없음'
+	})
+	type: 'hobby' | 'interior';
 }

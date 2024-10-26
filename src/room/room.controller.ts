@@ -8,7 +8,10 @@ import {
 	Patch,
 	Delete,
 	Param,
-	NotFoundException
+	NotFoundException,
+	InternalServerErrorException,
+	HttpException,
+	BadRequestException
 } from '@nestjs/common';
 import {
 	ApiResponse,
@@ -25,6 +28,7 @@ import { RoomService } from './room.service';
 import { CreateRoomDto } from './dto/room.create.dto';
 import { UpdateRoomDto } from './dto/room.update.dto';
 import { ItemDto } from './dto/room-items.dto';
+import { Types } from 'mongoose';
 
 @ApiBearerAuth()
 @UseGuards(ApiGuard, JwtAuthGuard)
@@ -46,13 +50,24 @@ export class RoomController {
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	@ApiParam({ name: 'userId', required: false, description: 'User ID (optional)' })
 	async findRoom(@Request() req, @Param('userId') userId?: string) {
-		const targetUserId = userId || req.user.id;
+		try {
+			const targetUserId = userId || req.user?.id;
 
-		if (!targetUserId) {
-			throw new NotFoundException('User ID not provided');
+			if (!targetUserId) {
+				throw new NotFoundException('User ID not provided');
+			}
+
+			if (!Types.ObjectId.isValid(targetUserId)) {
+				throw new BadRequestException('Invalid User ID format');
+			}
+
+			return await this.roomService.findByUserId(targetUserId);
+		} catch (error) {
+			if (error instanceof HttpException) {
+				throw error;
+			}
+			throw new InternalServerErrorException('Failed to retrieve room information');
 		}
-
-		return this.roomService.findByUserId(targetUserId);
 	}
 
 	@Post()
