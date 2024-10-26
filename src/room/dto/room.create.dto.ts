@@ -13,13 +13,15 @@ export class CreateRoomDto {
 				name: 'sofa',
 				x: 100,
 				y: 150,
-				visible: true
+				visible: true,
+				type: 'hobby'
 			},
 			{
 				name: 'picture',
 				x: 150,
 				y: 300,
-				visible: false
+				visible: false,
+				type: 'interior'
 			}
 		]
 	})
