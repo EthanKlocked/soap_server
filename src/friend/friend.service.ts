@@ -5,24 +5,30 @@ import {
 	NotFoundException,
 	HttpException,
 	BadRequestException,
-	UnprocessableEntityException
+	UnprocessableEntityException,
+	Logger
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, isValidObjectId, Types } from 'mongoose';
+import { Model, isValidObjectId } from 'mongoose';
 import { FriendRequest } from '@src/friend/schema/friendRequest.schema';
 import { Friendship } from '@src/friend/schema/friendship.schema';
 import { BlockedUser } from '@src/user/schema/blockedUser.schema';
 import { User } from '@src/user/schema/user.schema';
 import { UserService } from '@src/user/user.service';
+import { PushService } from '@src/push/push.service';
+import { PUSH_MESSAGE_LIST } from '@src/push/push.constants';
 
 @Injectable()
 export class FriendService {
+	private readonly logger = new Logger(FriendService.name);
+
 	constructor(
 		@InjectModel(FriendRequest.name) private friendRequestModel: Model<FriendRequest>,
 		@InjectModel(Friendship.name) private friendshipModel: Model<Friendship>,
 		@InjectModel(BlockedUser.name) private blockedUserModel: Model<BlockedUser>,
 		@InjectModel(User.name) private userModel: Model<User>,
-		private userService: UserService
+		private userService: UserService,
+		private readonly pushService: PushService
 	) {}
 
 	async areFriends(user1Id: string, user2Id: string): Promise<boolean> {
@@ -40,6 +46,35 @@ export class FriendService {
 			throw new InternalServerErrorException(
 				'An unexpected error occurred while checking friendship'
 			);
+		}
+	}
+
+	// 소프 요청 푸시
+	private async sendFriendRequestPush(receiverId: string, sender: User, requestId: string) {
+		try {
+			const receiver = await this.userModel.findOne({ _id: receiverId });
+
+			if (!receiver) {
+				this.logger.warn(`User not found for receiverId: ${receiverId}`);
+				return;
+			}
+
+			await this.pushService.sendPushToUser(receiverId, {
+				title: PUSH_MESSAGE_LIST.request_soaf.title,
+				body: PUSH_MESSAGE_LIST.request_soaf.description.replace(
+					'{nickname}',
+					receiver.name
+				),
+				data: {
+					type: 'FRIEND_REQUEST',
+					requestId: requestId,
+					senderId: sender._id.toString(),
+					senderName: sender.name
+				}
+			});
+		} catch (error) {
+			// 푸시 실패는 경고 로그만 남기고 계속 진행
+			this.logger.warn(`Failed to send push notification: ${error.message}`);
 		}
 	}
 
@@ -100,7 +135,15 @@ export class FriendService {
 				message,
 				status: 'pending'
 			});
-			return await newRequest.save();
+
+			const savedRequest = await newRequest.save();
+			const sender = await this.userService.findById(senderId);
+
+			this.sendFriendRequestPush(receiverId, sender, savedRequest._id.toString()).catch(
+				error => this.logger.error('Background push notification failed:', error)
+			);
+
+			return savedRequest;
 		} catch (e) {
 			if (e instanceof HttpException) throw e;
 			throw new InternalServerErrorException('An unexpected error occurred');
