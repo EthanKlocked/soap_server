@@ -5,6 +5,7 @@ import { FriendService } from '@src/friend/friend.service';
 import { FriendRequest, FriendRequestSchema } from '@src/friend/schema/friendRequest.schema';
 import { Friendship, FriendshipSchema } from '@src/friend/schema/friendship.schema';
 import { UserModule } from '@src/user/user.module';
+import { PushModule } from '@src/push/push.module';
 
 @Module({
 	imports: [
@@ -12,7 +13,8 @@ import { UserModule } from '@src/user/user.module';
 			{ name: FriendRequest.name, schema: FriendRequestSchema },
 			{ name: Friendship.name, schema: FriendshipSchema }
 		]),
-		UserModule
+		UserModule,
+		PushModule
 	],
 	controllers: [FriendController],
 	providers: [FriendService],

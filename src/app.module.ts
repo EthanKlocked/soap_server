@@ -13,6 +13,7 @@ import { DiaryModule } from './diary/diary.module';
 import { FriendModule } from './friend/friend.module';
 import { MyHomeModule } from './my-home/my-home.module';
 import { RoomModule } from './room/room.module';
+import { PushModule } from './push/push.module';
 
 @Module({
 	imports: [
@@ -33,7 +34,8 @@ import { RoomModule } from './room/room.module';
 		DiaryModule,
 		FriendModule,
 		MyHomeModule,
-		RoomModule
+		RoomModule,
+		PushModule
 	],
 	controllers: [AppController],
 	providers: [AppService]
