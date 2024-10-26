@@ -1,11 +1,11 @@
 import { IsArray, IsOptional, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ItemDto } from './room-items.dto';
+import { UpdateItemDto } from './update-items.dto';
 
 export class UpdateRoomDto {
 	@IsArray()
 	@ValidateNested({ each: true })
-	@Type(() => ItemDto)
+	@Type(() => UpdateItemDto)
 	@IsOptional()
-	items?: ItemDto[];
+	items?: UpdateItemDto[];
 }

@@ -28,6 +28,7 @@ import { RoomService } from './room.service';
 import { CreateRoomDto } from './dto/room.create.dto';
 import { UpdateRoomDto } from './dto/room.update.dto';
 import { ItemDto } from './dto/room-items.dto';
+import { UpdateItemDto } from './dto/update-items.dto';
 import { Types } from 'mongoose';
 
 @ApiBearerAuth()
@@ -113,7 +114,7 @@ export class RoomController {
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 404, description: 'Room not found' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
-	async updateRoom(@Request() req, @Body() updateRoomDto: UpdateRoomDto | ItemDto) {
+	async updateRoom(@Request() req, @Body() updateRoomDto: UpdateRoomDto | UpdateItemDto) {
 		return this.roomService.update(req.user.id, updateRoomDto);
 	}
 

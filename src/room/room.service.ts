@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Room } from './schema/room.schema';
@@ -6,6 +6,7 @@ import { CreateRoomDto } from './dto/room.create.dto';
 import { UpdateRoomDto } from './dto/room.update.dto';
 import { ItemDto } from './dto/room-items.dto';
 import { DEFAULT_ROOM_ITEMS } from './room.constants';
+import { UpdateItemDto } from './dto/update-items.dto';
 
 @Injectable()
 export class RoomService {
@@ -31,34 +32,44 @@ export class RoomService {
 		return room;
 	}
 
-	async update(userId: string, updateDto: UpdateRoomDto | ItemDto): Promise<Room> {
+	async update(userId: string, updateDto: UpdateRoomDto | UpdateItemDto): Promise<Room> {
 		const room = await this.roomModel.findOne({ userId }).exec();
+		if (!room) throw new NotFoundException(`Room not found`);
 
-		if (!room) {
-			throw new NotFoundException(`Room for user "${userId}" not found`);
-		}
+		const updateItem = (item: UpdateItemDto) => {
+			if (!item.name) return;
 
-		if (isUpdateRoomDto(updateDto)) {
-			updateDto.items.forEach(newItem => {
-				const index = room.items.findIndex(item => item.name === newItem.name);
-				if (index !== -1) {
-					room.items[index] = { ...room.items[index], ...newItem };
-				} else {
-					room.items.push(newItem);
+			const index = room.items.findIndex(i => i.name === item.name);
+			// undefined 필드는 제외하고 업데이트할 필드만 추출
+			const updates = Object.fromEntries(
+				Object.entries(item).filter(([key, value]) => value !== undefined && key !== '_id') // _id 제외
+			);
+
+			if (index === -1) {
+				// 새 아이템
+				if (!item.x || !item.y || !item.type) {
+					throw new BadRequestException('New item requires x, y, and type fields');
 				}
-			});
-		} else {
-			const index = room.items.findIndex(item => item.name === updateDto.name);
-			if (index !== -1) {
-				room.items[index] = { ...room.items[index], ...updateDto };
+				room.items.push({
+					...updates,
+					visible: item.visible ?? true
+				} as ItemDto);
 			} else {
-				room.items.push(updateDto);
+				// type 필드가 없으면 기존 type 유지
+				if (!updates.type) {
+					updates.type = room.items[index].type;
+				}
+
+				room.items[index] = {
+					...room.items[index],
+					...updates
+				};
 			}
-		}
+		};
 
-		await room.save();
+		('items' in updateDto ? updateDto.items : [updateDto])?.forEach(updateItem);
 
-		return room;
+		return room.save();
 	}
 
 	async remove(userId: string): Promise<Room> {
@@ -68,8 +79,4 @@ export class RoomService {
 		}
 		return deletedRoom;
 	}
-}
-
-function isUpdateRoomDto(dto: UpdateRoomDto | ItemDto): dto is UpdateRoomDto {
-	return 'items' in dto && Array.isArray(dto.items);
 }
