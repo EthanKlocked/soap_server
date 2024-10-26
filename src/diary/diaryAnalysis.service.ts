@@ -16,7 +16,7 @@ export class DiaryAnalysisService {
 		private readonly userService: UserService
 	) {}
 
-	async getSimilarUsers(userId: string, limit: number = 5, diaryId?: string): Promise<any[]> {
+	async getSimilarUsers(userId: string, limit: number, diaryId?: string): Promise<any[]> {
 		try {
 			const userAnalysesOption = diaryId ? { userId, diaryId } : { userId };
 			const userAnalyses = await this.diaryAnalysisModel.find(userAnalysesOption).lean();

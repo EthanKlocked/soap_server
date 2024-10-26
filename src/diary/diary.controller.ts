@@ -11,7 +11,8 @@ import {
 	Delete,
 	UseInterceptors,
 	UploadedFiles,
-	BadRequestException
+	BadRequestException,
+	ParseIntPipe
 } from '@nestjs/common';
 import {
 	ApiResponse,
@@ -71,7 +72,7 @@ export class DiaryController {
 	})
 	async getSimilarUsers(
 		@Request() req,
-		@Query('limit') limit?: number,
+		@Query('limit', new ParseIntPipe({ optional: true })) limit = 5,
 		@Query('diaryId') diaryId?: string
 	) {
 		return this.diaryAnalysisService.getSimilarUsers(req.user.id, limit, diaryId);
