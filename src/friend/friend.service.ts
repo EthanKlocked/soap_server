@@ -321,15 +321,21 @@ export class FriendService {
 			const friendRequest = await this.friendRequestModel
 				.findOne({
 					$or: [
-						{ senderId: userId, receiverId: targetUserId, status: 'pending' },
-						{ senderId: targetUserId, receiverId: userId, status: 'pending' }
+						{ senderId: userId, receiverId: targetUserId },
+						{ senderId: targetUserId, receiverId: userId }
 					]
 				})
+				.sort({ lastRequestDate: -1 }) // 가장 최근 요청을 가져옴
 				.lean()
 				.exec();
 
 			if (friendRequest) {
-				return FriendshipStatus.PENDING;
+				if (friendRequest.status === 'pending') {
+					return FriendshipStatus.PENDING;
+				}
+				if (friendRequest.status === 'rejected') {
+					return FriendshipStatus.REJECTED;
+				}
 			}
 
 			// 3. 둘 다 없으면 친구 아님
