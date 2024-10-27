@@ -94,6 +94,9 @@ export class DiaryCreateDto {
 	@ApiProperty({ example: true, required: false, description: 'Public option' })
 	@IsOptional()
 	@IsBoolean()
-	@Type(() => Boolean)
+	@Transform(({ value }) => {
+		if (typeof value === 'string') return value.toLowerCase() === 'true';
+		return Boolean(value);
+	})
 	isPublic?: boolean;
 }

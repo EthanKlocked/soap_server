@@ -203,12 +203,24 @@ export class FriendService {
 
 	async getFriendRequests(userId: string): Promise<FriendRequest[]> {
 		try {
-			return await this.friendRequestModel
+			const requests = await this.friendRequestModel
 				.find({
 					receiverId: userId,
 					status: 'pending'
 				})
+				.populate<{ senderId: User }>({
+					path: 'senderId',
+					select: 'name',
+					model: 'User'
+				})
+				.lean()
 				.exec();
+
+			return requests.map(request => ({
+				...request,
+				senderName: request.senderId.name,
+				senderId: request.senderId._id
+			}));
 		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');
 		}
