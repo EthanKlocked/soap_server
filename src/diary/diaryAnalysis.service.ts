@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Diary } from '@src/diary/schema/diary.schema';
 import { DiaryAnalysis } from '@src/diary/schema/diaryAnalysis.schema';
-import { ClientSession } from 'mongoose';
+import { Friendship } from '@src/friend/schema/friendship.schema';
 import { BlockedUser } from '@src/user/schema/blockedUser.schema';
 import { UserService } from '@src/user/user.service';
 
@@ -13,6 +13,7 @@ export class DiaryAnalysisService {
 		@InjectModel(Diary.name) private diaryModel: Model<Diary>,
 		@InjectModel(DiaryAnalysis.name) private diaryAnalysisModel: Model<DiaryAnalysis>,
 		@InjectModel(BlockedUser.name) private blockedUserModel: Model<BlockedUser>,
+		@InjectModel(Friendship.name) private friendshipModel: Model<BlockedUser>,
 		private readonly userService: UserService
 	) {}
 
@@ -25,8 +26,16 @@ export class DiaryAnalysisService {
 			const blockedUsers = await this.blockedUserModel
 				.find({ userId })
 				.distinct('blockedUserId');
+			// Get friend user IDs from both fields
+			const friendIds = [
+				...(await this.friendshipModel.distinct('user2Id', { user1Id: userId })),
+				...(await this.friendshipModel.distinct('user1Id', { user2Id: userId }))
+			];
 			const publicDiaryIds = await this.diaryModel
-				.find({ userId: { $ne: userId, $nin: blockedUsers }, isPublic: true })
+				.find({
+					userId: { $ne: userId, $nin: [...blockedUsers, ...friendIds] },
+					isPublic: true
+				})
 				.distinct('_id');
 			const allUserAnalyses = await this.diaryAnalysisModel
 				.find({
