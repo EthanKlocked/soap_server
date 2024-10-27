@@ -2,63 +2,63 @@ export const DEFAULT_ROOM_ITEMS = [
 	{
 		name: 'books',
 		x: 1.47,
-		y: 6.0,
+		y: 1,
 		visible: true,
 		type: 'hobby'
 	},
 	{
 		name: 'movie',
 		x: 2.67,
-		y: 32.23,
+		y: 27.23,
 		visible: true,
 		type: 'hobby'
 	},
 	{
 		name: 'music',
-		x: 10.67,
-		y: 18.0,
+		x: 8.67,
+		y: 14,
 		visible: true,
 		type: 'hobby'
 	},
 	{
 		name: 'picture',
-		x: 40.0,
-		y: 9.9,
+		x: 40,
+		y: 5.9,
 		visible: true,
 		type: 'interior'
 	},
 	{
 		name: 'plant',
 		x: 50.67,
-		y: 34.99,
+		y: 28.99,
 		visible: true,
 		type: 'interior'
 	},
 	{
 		name: 'sofa',
 		x: 66.67,
-		y: 29.99,
+		y: 25.99,
 		visible: true,
 		type: 'interior'
 	},
 	{
 		name: 'windowDay',
 		x: 66.67,
-		y: 7.2,
+		y: 5.2,
 		visible: true,
 		type: 'interior'
 	},
 	{
 		name: 'windowNight',
 		x: 66.67,
-		y: 7.2,
+		y: 5.2,
 		visible: true,
 		type: 'interior'
 	},
 	{
 		name: 'youtube',
-		x: 40.0,
-		y: 24.89,
+		x: 40,
+		y: 17.89,
 		visible: true,
 		type: 'hobby'
 	}
