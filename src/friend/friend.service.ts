@@ -17,6 +17,7 @@ import { User } from '@src/user/schema/user.schema';
 import { UserService } from '@src/user/user.service';
 import { PushService } from '@src/push/push.service';
 import { PUSH_MESSAGE_LIST } from '@src/push/push.constants';
+import { FriendshipStatus } from './friendship.enum';
 
 @Injectable()
 export class FriendService {
@@ -295,6 +296,46 @@ export class FriendService {
 			return friendsWithDetails;
 		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
+
+	// 친구 상태 확인
+	async getFriendshipStatus(userId: string, targetUserId: string): Promise<FriendshipStatus> {
+		try {
+			// 1. 먼저 친구 관계 확인
+			const friendship = await this.friendshipModel
+				.findOne({
+					$or: [
+						{ user1Id: userId, user2Id: targetUserId },
+						{ user1Id: targetUserId, user2Id: userId }
+					]
+				})
+				.lean()
+				.exec();
+
+			if (friendship) {
+				return FriendshipStatus.SOAF;
+			}
+
+			// 2. 친구 요청 상태 확인 (보낸 요청과 받은 요청 모두 확인)
+			const friendRequest = await this.friendRequestModel
+				.findOne({
+					$or: [
+						{ senderId: userId, receiverId: targetUserId, status: 'pending' },
+						{ senderId: targetUserId, receiverId: userId, status: 'pending' }
+					]
+				})
+				.lean()
+				.exec();
+
+			if (friendRequest) {
+				return FriendshipStatus.PENDING;
+			}
+
+			// 3. 둘 다 없으면 친구 아님
+			return FriendshipStatus.NOT_SOAF;
+		} catch (e) {
+			throw new InternalServerErrorException('Failed to check friendship status');
 		}
 	}
 
