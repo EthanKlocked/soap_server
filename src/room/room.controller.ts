@@ -207,9 +207,12 @@ export class RoomController {
 			]);
 
 			return {
-				...room.toObject(), // mongoose 객체를 일반 객체로 변환
+				...room.toObject(),
 				user: userInfo,
-				friendshipStatus
+				friendshipStatus: friendshipStatus.status,
+				...(friendshipStatus.remainingDays !== undefined && {
+					remainingDays: friendshipStatus.remainingDays
+				})
 			};
 		} catch (error) {
 			if (error instanceof HttpException) {

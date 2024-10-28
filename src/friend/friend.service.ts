@@ -19,6 +19,11 @@ import { PushService } from '@src/push/push.service';
 import { PUSH_MESSAGE_LIST } from '@src/push/push.constants';
 import { FriendshipStatus } from './friendship.enum';
 
+export interface FriendshipStatusResponse {
+	status: FriendshipStatus;
+	remainingDays?: number;
+}
+
 @Injectable()
 export class FriendService {
 	private readonly logger = new Logger(FriendService.name);
@@ -300,7 +305,10 @@ export class FriendService {
 	}
 
 	// 친구 상태 확인
-	async getFriendshipStatus(userId: string, targetUserId: string): Promise<FriendshipStatus> {
+	async getFriendshipStatus(
+		userId: string,
+		targetUserId: string
+	): Promise<FriendshipStatusResponse> {
 		try {
 			// 1. 먼저 친구 관계 확인
 			const friendship = await this.friendshipModel
@@ -314,7 +322,7 @@ export class FriendService {
 				.exec();
 
 			if (friendship) {
-				return FriendshipStatus.SOAF;
+				return { status: FriendshipStatus.SOAF };
 			}
 
 			// 2. 친구 요청 상태 확인 (보낸 요청과 받은 요청 모두 확인)
@@ -331,15 +339,26 @@ export class FriendService {
 
 			if (friendRequest) {
 				if (friendRequest.status === 'pending') {
-					return FriendshipStatus.PENDING;
+					return { status: FriendshipStatus.PENDING };
 				}
 				if (friendRequest.status === 'rejected') {
-					return FriendshipStatus.REJECTED;
+					const remainingDays = Math.max(
+						0,
+						Math.ceil(
+							(this.FRIEND_REQUEST_COOLDOWN -
+								(Date.now() - new Date(friendRequest.lastRequestDate).getTime())) /
+								(24 * 60 * 60 * 1000)
+						)
+					);
+					return {
+						status: FriendshipStatus.REJECTED,
+						remainingDays
+					};
 				}
 			}
 
 			// 3. 둘 다 없으면 친구 아님
-			return FriendshipStatus.NOT_SOAF;
+			return { status: FriendshipStatus.NOT_SOAF };
 		} catch (e) {
 			throw new InternalServerErrorException('Failed to check friendship status');
 		}
