@@ -71,7 +71,7 @@ export class UserService /*implements OnModuleInit*/ {
 
 	async findById(id: string) {
 		try {
-			const user = await this.userModel.findById(id).exec();
+			const user = await this.userModel.findById(id).select('_id email name').lean().exec();
 			return user;
 		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');

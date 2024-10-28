@@ -17,6 +17,12 @@ import { User } from '@src/user/schema/user.schema';
 import { UserService } from '@src/user/user.service';
 import { PushService } from '@src/push/push.service';
 import { PUSH_MESSAGE_LIST } from '@src/push/push.constants';
+import { FriendshipStatus } from './friendship.enum';
+
+export interface FriendshipStatusResponse {
+	status: FriendshipStatus;
+	remainingDays?: number;
+}
 
 @Injectable()
 export class FriendService {
@@ -295,6 +301,66 @@ export class FriendService {
 			return friendsWithDetails;
 		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
+
+	// 친구 상태 확인
+	async getFriendshipStatus(
+		userId: string,
+		targetUserId: string
+	): Promise<FriendshipStatusResponse> {
+		try {
+			// 1. 먼저 친구 관계 확인
+			const friendship = await this.friendshipModel
+				.findOne({
+					$or: [
+						{ user1Id: userId, user2Id: targetUserId },
+						{ user1Id: targetUserId, user2Id: userId }
+					]
+				})
+				.lean()
+				.exec();
+
+			if (friendship) {
+				return { status: FriendshipStatus.SOAF };
+			}
+
+			// 2. 친구 요청 상태 확인 (보낸 요청과 받은 요청 모두 확인)
+			const friendRequest = await this.friendRequestModel
+				.findOne({
+					$or: [
+						{ senderId: userId, receiverId: targetUserId },
+						{ senderId: targetUserId, receiverId: userId }
+					]
+				})
+				.sort({ lastRequestDate: -1 }) // 가장 최근 요청을 가져옴
+				.lean()
+				.exec();
+
+			if (friendRequest) {
+				if (friendRequest.status === 'pending') {
+					return { status: FriendshipStatus.PENDING };
+				}
+				if (friendRequest.status === 'rejected') {
+					const remainingDays = Math.max(
+						0,
+						Math.ceil(
+							(this.FRIEND_REQUEST_COOLDOWN -
+								(Date.now() - new Date(friendRequest.lastRequestDate).getTime())) /
+								(24 * 60 * 60 * 1000)
+						)
+					);
+					return {
+						status: FriendshipStatus.REJECTED,
+						remainingDays
+					};
+				}
+			}
+
+			// 3. 둘 다 없으면 친구 아님
+			return { status: FriendshipStatus.NOT_SOAF };
+		} catch (e) {
+			throw new InternalServerErrorException('Failed to check friendship status');
 		}
 	}
 

@@ -17,7 +17,8 @@ import {
 	ApiQuery,
 	ApiSecurity,
 	ApiOperation,
-	ApiBody
+	ApiBody,
+	ApiTags
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
@@ -33,6 +34,7 @@ import { CategoryType, ContentType } from './schema/my-home.schema';
 export class MyHomeController {
 	constructor(private readonly myHomeService: MyHomeService) {}
 
+	@ApiTags('My-Home')
 	@Get(':id')
 	@ApiOperation({
 		summary: '특정 MyHome 정보 조회',
@@ -97,6 +99,7 @@ export class MyHomeController {
 		return this.myHomeService.findOne(id);
 	}
 
+	@ApiTags('My-Home')
 	@Get()
 	@ApiOperation({
 		summary: 'MyHome 정보 조회',
@@ -150,6 +153,7 @@ export class MyHomeController {
 		return this.myHomeService.findAll(userId, category);
 	}
 
+	@ApiTags('My-Home')
 	@Post()
 	@ApiOperation({
 		summary: '새 MyHome 생성',
@@ -170,6 +174,7 @@ export class MyHomeController {
 		});
 	}
 
+	@ApiTags('My-Home')
 	@Patch(':id')
 	@ApiOperation({
 		summary: 'MyHome 정보 수정',
@@ -197,6 +202,7 @@ export class MyHomeController {
 		return this.myHomeService.update(id, updateMyHomeDto);
 	}
 
+	@ApiTags('My-Home')
 	@Delete(':id')
 	@ApiOperation({
 		summary: 'MyHome 삭제',
