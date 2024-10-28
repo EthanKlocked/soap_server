@@ -21,6 +21,7 @@ import { PUSH_MESSAGE_LIST } from '@src/push/push.constants';
 @Injectable()
 export class FriendService {
 	private readonly logger = new Logger(FriendService.name);
+	private readonly FRIEND_REQUEST_COOLDOWN = 7 * 24 * 60 * 60 * 1000;
 
 	constructor(
 		@InjectModel(FriendRequest.name) private friendRequestModel: Model<FriendRequest>,
@@ -226,15 +227,35 @@ export class FriendService {
 		}
 	}
 
-	async getSentFriendRequests(userId: string): Promise<FriendRequest[]> {
+	async getSentFriendRequests(
+		userId: string
+	): Promise<Array<FriendRequest & { remainingDays?: number }>> {
 		try {
-			return await this.friendRequestModel
+			const requests = await this.friendRequestModel
 				.find({
 					senderId: userId,
 					status: { $in: ['pending', 'rejected'] }
 				})
 				.sort({ lastRequestDate: -1 })
+				.lean()
 				.exec();
+
+			return requests.map(request =>
+				request.status === 'rejected'
+					? {
+							...request,
+							remainingDays: Math.max(
+								0,
+								Math.ceil(
+									(this.FRIEND_REQUEST_COOLDOWN -
+										(Date.now() -
+											new Date(request.lastRequestDate).getTime())) /
+										(24 * 60 * 60 * 1000)
+								)
+							)
+						}
+					: request
+			);
 		} catch (e) {
 			throw new InternalServerErrorException(
 				'An unexpected error occurred while fetching sent friend requests'
@@ -288,9 +309,8 @@ export class FriendService {
 				.sort({ lastRequestDate: -1 })
 				.exec();
 			if (!lastRejectedRequest) return true;
-			const cooldownPeriod = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 			const timeSinceLastRequest = Date.now() - lastRejectedRequest.lastRequestDate.getTime();
-			return timeSinceLastRequest > cooldownPeriod;
+			return timeSinceLastRequest > this.FRIEND_REQUEST_COOLDOWN;
 		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');
 		}

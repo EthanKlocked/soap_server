@@ -219,6 +219,22 @@ export class UserController {
 		return await this.userService.findProfile(req.user.id);
 	}
 
+	@ApiTags('User-Info')
+	@Get('check-name/:name')
+	@ApiOperation({
+		summary: 'Check username availability',
+		description: 'Checks if a username is already taken'
+	})
+	@ApiParam({
+		name: 'name',
+		type: 'string',
+		description: 'Username to check'
+	})
+	@ApiResponse({ status: 200, description: 'Returns true if name is taken, false if available' })
+	async checkNameDuplicate(@Param('name') name: string): Promise<boolean> {
+		return await this.userService.isNameDuplicate(name);
+	}
+
 	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Patch()

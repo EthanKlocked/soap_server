@@ -311,16 +311,31 @@ export class UserService /*implements OnModuleInit*/ {
 		try {
 			const blockedUsers = await this.blockedUserModel
 				.find({ userId })
-				.populate('blockedUserId', 'email name') // User 스키마에서 필요한 필드만 가져오기
+				.populate('blockedUserId', 'email name')
+				.lean()
 				.exec();
+
+			const friendIds = await this.friendshipModel.distinct('user1Id', {
+				$or: [{ user1Id: userId }, { user2Id: userId }]
+			});
 
 			return blockedUsers.map(block => ({
 				id: block.blockedUserId._id,
 				email: block.blockedUserId['email'],
-				name: block.blockedUserId['name']
+				name: block.blockedUserId['name'],
+				isFriend: friendIds.includes(block.blockedUserId._id)
 			}));
 		} catch (e) {
 			if (e instanceof HttpException) throw e;
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
+
+	async isNameDuplicate(name: string): Promise<boolean> {
+		try {
+			const existingUser = await this.userModel.exists({ name }).exec();
+			return !!existingUser;
+		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');
 		}
 	}

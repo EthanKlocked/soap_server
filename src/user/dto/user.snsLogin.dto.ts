@@ -1,11 +1,6 @@
 import { IsEmail, IsNotEmpty, IsString, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-
-export enum SnsType {
-	KAKAO = 'kakao',
-	GOOGLE = 'google',
-	APPLE = 'apple'
-}
+import { SnsType } from '@src/user/user.interface';
 
 export class UserSnsLoginDto {
 	@IsEmail()
