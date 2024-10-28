@@ -17,7 +17,7 @@ import { User } from '@src/user/schema/user.schema';
 import { UserService } from '@src/user/user.service';
 import { PushService } from '@src/push/push.service';
 import { PUSH_MESSAGE_LIST } from '@src/push/push.constants';
-import { FriendshipStatus } from './friendship.enum';
+import { FriendshipStatus } from '@src/friend/friendship.interface';
 
 export interface FriendshipStatusResponse {
 	status: FriendshipStatus;
