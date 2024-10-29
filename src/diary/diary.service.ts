@@ -157,7 +157,6 @@ export class DiaryService {
 
 			return createdDiary;
 		} catch (e) {
-			console.log(e);
 			throw new InternalServerErrorException(
 				'An unexpected error occurred while creating the diary'
 			);

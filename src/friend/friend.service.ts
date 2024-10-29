@@ -17,12 +17,7 @@ import { User } from '@src/user/schema/user.schema';
 import { UserService } from '@src/user/user.service';
 import { PushService } from '@src/push/push.service';
 import { PUSH_MESSAGE_LIST } from '@src/push/push.constants';
-import { FriendshipStatus } from '@src/friend/friendship.interface';
-
-export interface FriendshipStatusResponse {
-	status: FriendshipStatus;
-	remainingDays?: number;
-}
+import { FriendRequestStatus } from '@src/friend/friendship.interface';
 
 @Injectable()
 export class FriendService {
@@ -56,16 +51,13 @@ export class FriendService {
 		}
 	}
 
-	// 소프 요청 푸시
 	private async sendFriendRequestPush(receiverId: string, sender: User, requestId: string) {
 		try {
 			const receiver = await this.userModel.findOne({ _id: receiverId });
-
 			if (!receiver) {
 				this.logger.warn(`User not found for receiverId: ${receiverId}`);
 				return;
 			}
-
 			await this.pushService.sendPushToUser(receiverId, {
 				title: PUSH_MESSAGE_LIST.request_soaf.title,
 				body: PUSH_MESSAGE_LIST.request_soaf.description.replace(
@@ -79,9 +71,8 @@ export class FriendService {
 					senderName: sender.name
 				}
 			});
-		} catch (error) {
-			// 푸시 실패는 경고 로그만 남기고 계속 진행
-			this.logger.warn(`Failed to send push notification: ${error.message}`);
+		} catch (e) {
+			this.logger.warn(`Failed to send push notification: ${e.message}`);
 		}
 	}
 
@@ -108,7 +99,7 @@ export class FriendService {
 				})
 				.exec();
 			if (existingRequest) {
-				if (existingRequest.status === 'pending') {
+				if (existingRequest.status === FriendRequestStatus.PENDING) {
 					if (existingRequest.senderId.toString() === senderId) {
 						throw new ConflictException(
 							'You already have a pending friend request to this user'
@@ -118,7 +109,7 @@ export class FriendService {
 							'This user has already sent you a friend request. Please respond to that request.'
 						);
 					}
-				} else if (existingRequest.status === 'rejected') {
+				} else if (existingRequest.status === FriendRequestStatus.REJECTED) {
 					if (existingRequest.senderId.toString() === senderId) {
 						const canSendRequest = await this.canSendFriendRequest(
 							senderId,
@@ -129,7 +120,7 @@ export class FriendService {
 								'You must wait before sending another request to this user'
 							);
 						}
-						existingRequest.status = 'pending';
+						existingRequest.status = FriendRequestStatus.PENDING;
 						existingRequest.message = message;
 						existingRequest.lastRequestDate = new Date();
 						return await existingRequest.save();
@@ -140,7 +131,7 @@ export class FriendService {
 				senderId,
 				receiverId,
 				message,
-				status: 'pending'
+				status: FriendRequestStatus.PENDING
 			});
 
 			const savedRequest = await newRequest.save();
@@ -160,13 +151,13 @@ export class FriendService {
 	async acceptFriendRequest(userId: string, requestId: string): Promise<Friendship> {
 		try {
 			const request = await this.friendRequestModel.findById(requestId).exec();
-			if (!request || request.status !== 'pending')
+			if (!request || request.status !== FriendRequestStatus.PENDING)
 				throw new NotFoundException('Friend request not found or already processed');
 			if (request.receiverId.toString() !== userId)
 				throw new ConflictException('You can only accept friend requests sent to you');
 			if (await this.areFriends(request.senderId.toString(), request.receiverId.toString()))
 				throw new UnprocessableEntityException('Users are already friends');
-			request.status = 'accepted';
+			request.status = FriendRequestStatus.ACCEPTED;
 			await request.save();
 			const newFriendship = new this.friendshipModel({
 				user1Id: request.senderId,
@@ -182,13 +173,13 @@ export class FriendService {
 	async rejectFriendRequest(userId: string, requestId: string): Promise<FriendRequest> {
 		try {
 			const request = await this.friendRequestModel.findById(requestId).exec();
-			if (!request || request.status !== 'pending')
+			if (!request || request.status !== FriendRequestStatus.PENDING)
 				throw new NotFoundException('Friend request not found or already processed');
 			if (request.receiverId.toString() !== userId)
 				throw new ConflictException('You can only reject friend requests sent to you');
 			if (await this.areFriends(request.senderId.toString(), request.receiverId.toString()))
 				throw new UnprocessableEntityException('Users are already friends');
-			request.status = 'rejected';
+			request.status = FriendRequestStatus.REJECTED;
 			request.lastRequestDate = new Date();
 			return await request.save();
 		} catch (e) {
@@ -213,7 +204,7 @@ export class FriendService {
 			const requests = await this.friendRequestModel
 				.find({
 					receiverId: userId,
-					status: 'pending'
+					status: FriendRequestStatus.PENDING
 				})
 				.populate<{ senderId: User }>({
 					path: 'senderId',
@@ -222,7 +213,6 @@ export class FriendService {
 				})
 				.lean()
 				.exec();
-
 			return requests.map(request => ({
 				...request,
 				senderName: request.senderId.name,
@@ -240,25 +230,17 @@ export class FriendService {
 			const requests = await this.friendRequestModel
 				.find({
 					senderId: userId,
-					status: { $in: ['pending', 'rejected'] }
+					status: { $in: [FriendRequestStatus.PENDING, FriendRequestStatus.REJECTED] }
 				})
 				.sort({ lastRequestDate: -1 })
 				.lean()
 				.exec();
 
 			return requests.map(request =>
-				request.status === 'rejected'
+				request.status === FriendRequestStatus.REJECTED
 					? {
 							...request,
-							remainingDays: Math.max(
-								0,
-								Math.ceil(
-									(this.FRIEND_REQUEST_COOLDOWN -
-										(Date.now() -
-											new Date(request.lastRequestDate).getTime())) /
-										(24 * 60 * 60 * 1000)
-								)
-							)
+							remainingDays: this.calculateRemainingDays(request.lastRequestDate)
 						}
 					: request
 			);
@@ -304,61 +286,33 @@ export class FriendService {
 		}
 	}
 
-	// 친구 상태 확인
 	async getFriendshipStatus(
 		userId: string,
 		targetUserId: string
-	): Promise<FriendshipStatusResponse> {
+	): Promise<{ status: FriendRequestStatus; remainingDays?: number }> {
 		try {
-			// 1. 먼저 친구 관계 확인
-			const friendship = await this.friendshipModel
-				.findOne({
-					$or: [
-						{ user1Id: userId, user2Id: targetUserId },
-						{ user1Id: targetUserId, user2Id: userId }
-					]
-				})
-				.lean()
-				.exec();
-
-			if (friendship) {
-				return { status: FriendshipStatus.SOAF };
-			}
-
-			// 2. 친구 요청 상태 확인 (보낸 요청과 받은 요청 모두 확인)
-			const friendRequest = await this.friendRequestModel
-				.findOne({
+			const requests = await this.friendRequestModel
+				.find({
 					$or: [
 						{ senderId: userId, receiverId: targetUserId },
 						{ senderId: targetUserId, receiverId: userId }
 					]
 				})
-				.sort({ lastRequestDate: -1 }) // 가장 최근 요청을 가져옴
-				.lean()
-				.exec();
-
-			if (friendRequest) {
-				if (friendRequest.status === 'pending') {
-					return { status: FriendshipStatus.PENDING };
-				}
-				if (friendRequest.status === 'rejected') {
-					const remainingDays = Math.max(
-						0,
-						Math.ceil(
-							(this.FRIEND_REQUEST_COOLDOWN -
-								(Date.now() - new Date(friendRequest.lastRequestDate).getTime())) /
-								(24 * 60 * 60 * 1000)
-						)
-					);
-					return {
-						status: FriendshipStatus.REJECTED,
-						remainingDays
-					};
-				}
+				.sort({ lastRequestDate: -1 })
+				.limit(2); //defense ( request must be created once )
+			const myRequest = requests.find(req => req.senderId.toString() === userId);
+			if (requests.some(req => req.status === FriendRequestStatus.ACCEPTED))
+				return { status: FriendRequestStatus.ACCEPTED };
+			if (!myRequest) return { status: FriendRequestStatus.EMPTY };
+			if (myRequest.status === FriendRequestStatus.PENDING)
+				return { status: FriendRequestStatus.PENDING };
+			if (myRequest.status === FriendRequestStatus.REJECTED) {
+				return {
+					status: FriendRequestStatus.REJECTED,
+					remainingDays: this.calculateRemainingDays(myRequest.lastRequestDate)
+				};
 			}
-
-			// 3. 둘 다 없으면 친구 아님
-			return { status: FriendshipStatus.NOT_SOAF };
+			return { status: FriendRequestStatus.INVALID };
 		} catch (e) {
 			throw new InternalServerErrorException('Failed to check friendship status');
 		}
@@ -370,7 +324,7 @@ export class FriendService {
 				.findOne({
 					senderId,
 					receiverId,
-					status: 'rejected'
+					status: FriendRequestStatus.REJECTED
 				})
 				.sort({ lastRequestDate: -1 })
 				.exec();
@@ -403,5 +357,16 @@ export class FriendService {
 			if (e instanceof HttpException) throw e;
 			throw new InternalServerErrorException('Failed to unfriend');
 		}
+	}
+
+	private calculateRemainingDays(lastRequestDate: Date): number {
+		return Math.max(
+			0,
+			Math.ceil(
+				(this.FRIEND_REQUEST_COOLDOWN -
+					(Date.now() - new Date(lastRequestDate).getTime())) /
+					(24 * 60 * 60 * 1000)
+			)
+		);
 	}
 }

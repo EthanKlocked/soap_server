@@ -202,7 +202,7 @@ export class RoomController {
 
 			const [room, userInfo, friendshipStatus] = await Promise.all([
 				this.roomService.findByUserId(userId),
-				this.userService.findById(userId),
+				this.userService.findProfile(userId),
 				this.friendService.getFriendshipStatus(req.user.id, userId)
 			]);
 
