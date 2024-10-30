@@ -67,10 +67,11 @@ export class FriendService {
 					receiver.name
 				),
 				data: {
-					type: 'FRIEND_REQUEST',
-					requestId: requestId,
-					senderId: sender._id.toString(),
-					senderName: sender.name
+					type: 'NAVIGATION',
+					nav_link: 'notification'
+					// requestId: requestId,
+					// senderId: sender._id.toString(),
+					// senderName: sender.name
 				}
 			});
 		} catch (error) {
