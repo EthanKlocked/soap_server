@@ -40,7 +40,8 @@ export class DiaryAnalysisService {
 			const allUserAnalyses = await this.diaryAnalysisModel
 				.find({
 					userId: { $ne: userId },
-					diaryId: { $in: publicDiaryIds }
+					diaryId: { $in: publicDiaryIds },
+					isAnalyzed: true
 				})
 				.lean();
 
