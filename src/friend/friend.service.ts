@@ -212,6 +212,7 @@ export class FriendService {
 					select: 'name',
 					model: 'User'
 				})
+				.sort({ lastRequestDate: -1 })
 				.lean()
 				.exec();
 			return requests.map(request => ({
