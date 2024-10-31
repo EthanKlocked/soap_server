@@ -314,15 +314,16 @@ export class UserService /*implements OnModuleInit*/ {
 				.lean()
 				.exec();
 
-			const friendIds = await this.friendshipModel.distinct('user1Id', {
-				$or: [{ user1Id: userId }, { user2Id: userId }]
-			});
+			const friendIds = [
+				...(await this.friendshipModel.distinct('user2Id', { user1Id: userId })),
+				...(await this.friendshipModel.distinct('user1Id', { user2Id: userId }))
+			].map(id => id.toString());
 
 			return blockedUsers.map(block => ({
 				id: block.blockedUserId._id,
 				email: block.blockedUserId['email'],
 				name: block.blockedUserId['name'],
-				isFriend: friendIds.includes(block.blockedUserId._id)
+				isFriend: friendIds.includes(block.blockedUserId._id.toString())
 			}));
 		} catch (e) {
 			if (e instanceof HttpException) throw e;
