@@ -255,9 +255,10 @@ export class FriendService {
 
 	async getFriends(userId: string): Promise<Friendship[]> {
 		try {
-			const blockedUsers = await this.blockedUserModel
-				.find({ userId })
-				.distinct('blockedUserId');
+			const blockedUsers = [
+				...(await this.blockedUserModel.distinct('blockedUserId', { userId })),
+				...(await this.blockedUserModel.distinct('userId', { blockedUserId: userId }))
+			];
 			const friendships = await this.friendshipModel
 				.find({
 					$or: [{ user1Id: userId }, { user2Id: userId }],

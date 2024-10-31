@@ -194,9 +194,9 @@ export class DiaryService {
 		}
 	}
 
-	async findOne(userId: string, id: string): Promise<Diary> {
+	async findOne(id: string): Promise<Diary> {
 		try {
-			const diary = await this.diaryModel.findOne({ _id: id, userId: userId }).exec();
+			const diary = await this.diaryModel.findOne({ _id: id }).exec();
 			return diary;
 		} catch (e) {
 			throw new InternalServerErrorException('An unexpected error occurred');

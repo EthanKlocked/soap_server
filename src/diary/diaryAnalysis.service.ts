@@ -22,24 +22,28 @@ export class DiaryAnalysisService {
 			const userAnalysesOption = diaryId ? { userId, diaryId } : { userId };
 			const userAnalyses = await this.diaryAnalysisModel.find(userAnalysesOption).lean();
 
-			// search only for available datasets
-			const blockedUsers = await this.blockedUserModel
-				.find({ userId })
-				.distinct('blockedUserId');
-			// Get friend user IDs from both fields
+			// user exception list
+			const blockedUserIds = [
+				...(await this.blockedUserModel.distinct('blockedUserId', { userId })),
+				...(await this.blockedUserModel.distinct('userId', { blockedUserId: userId }))
+			];
 			const friendIds = [
 				...(await this.friendshipModel.distinct('user2Id', { user1Id: userId })),
 				...(await this.friendshipModel.distinct('user1Id', { user2Id: userId }))
 			];
+			const exceptionUserIds = [...blockedUserIds, ...friendIds, userId];
+
+			//diary exception list
 			const publicDiaryIds = await this.diaryModel
 				.find({
-					userId: { $ne: userId, $nin: [...blockedUsers, ...friendIds] },
+					userId: { $ne: userId },
 					isPublic: true
 				})
 				.distinct('_id');
+
 			const allUserAnalyses = await this.diaryAnalysisModel
 				.find({
-					userId: { $ne: userId },
+					userId: { $nin: exceptionUserIds },
 					diaryId: { $in: publicDiaryIds },
 					isAnalyzed: true
 				})

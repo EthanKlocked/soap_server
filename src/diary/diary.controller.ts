@@ -159,7 +159,7 @@ export class DiaryController {
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	async findOne(@Request() req, @Param('id') id: string) {
-		return this.diaryService.findOne(req.user.id, id);
+		return this.diaryService.findOne(id);
 	}
 
 	@ApiTags('Diary-Management')
