@@ -38,7 +38,21 @@ services:
 
     mongodb:
         image: mongo:4.4
-        command: mongod --port 37017
+        command: >
+            sh -c "mongod --port 37017 --bind_ip_all &
+                  sleep 5 &&
+                  mongosh --port 37017 --eval '
+                  db.getSiblingDB(\"admin\").createUser({
+                    user: \"${DB_USER_CUSTOM}\",
+                    pwd: \"${DB_PASSWORD_CUSTOM}\",
+                    roles: [ { role: \"root\", db: \"admin\" } ]
+                  });
+                  db.getSiblingDB(\"${DB_NAME_CUSTOM}\").createUser({
+                    user: \"${DB_USER_CUSTOM}\",
+                    pwd: \"${DB_PASSWORD_CUSTOM}\",
+                    roles: [ { role: \"readWrite\", db: \"${DB_NAME_CUSTOM}\" } ]
+                  });' && 
+                  mongod --port 37017 --auth"
         environment:
             - MONGO_INITDB_ROOT_USERNAME=${DB_USER_CUSTOM}
             - MONGO_INITDB_ROOT_PASSWORD=${DB_PASSWORD_CUSTOM}
