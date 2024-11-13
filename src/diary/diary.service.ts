@@ -40,14 +40,9 @@ export class DiaryService {
 		const aiServicePort = this.configService.get<number>('AI_SERVICE_PORT_CUSTOM', 3000);
 		this.aiServiceUrl = `http://${aiServiceHost}:${aiServicePort}`;
 		this.apiSecret = this.configService.get<string>('API_SECRET');
-		this.bucketName = this.configService.get<string>('NCP_BUCKET_NAME');
+		this.bucketName = this.configService.get<string>('AWS_BUCKET_NAME');
 		this.s3Client = new S3Client({
-			region: 'kr-standard',
-			endpoint: 'https://kr.object.ncloudstorage.com',
-			credentials: {
-				accessKeyId: this.configService.get<string>('NCP_ACCESS_KEY'),
-				secretAccessKey: this.configService.get<string>('NCP_SECRET_KEY')
-			}
+			region: this.configService.get<string>('AWS_REGION', 'ap-northeast-2')
 		});
 		this.isDevEnvironment = this.configService.get<string>('NODE_ENV') === 'dev';
 		this.localImagePath = path.join(__dirname, '..', '..', 'uploads', 'images');
@@ -91,7 +86,7 @@ export class DiaryService {
 
 			await this.s3Client.send(command);
 
-			return `https://${this.bucketName}.kr.object.ncloudstorage.com/${key}`;
+			return `https://${this.bucketName}.s3.${this.configService.get<string>('AWS_REGION')}.amazonaws.com/${key}`;
 		});
 
 		return Promise.all(uploadPromises);
