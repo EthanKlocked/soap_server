@@ -80,7 +80,6 @@ export class DiaryService {
 				Bucket: this.bucketName,
 				Key: key,
 				Body: file.buffer,
-				ACL: 'public-read',
 				ContentType: file.mimetype
 			});
 
