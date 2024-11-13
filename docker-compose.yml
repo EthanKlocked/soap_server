@@ -1,5 +1,4 @@
 version: '3'
-env_file: .env.prod
 services:
     nginx:
         image: nginx:latest
