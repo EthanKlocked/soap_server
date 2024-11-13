@@ -11,7 +11,8 @@ export const cacheConfig = {
 			ttl: configService.get('REDIS_TTL_CUSTOM'),
 			store: redisStore,
 			host: configService.get('REDIS_HOST_CUSTOM'),
-			port: configService.get('REDIS_PORT_CUSTOM')
+			port: configService.get('REDIS_PORT_CUSTOM'),
+			password: configService.get('REDIS_PASSWORD')
 		};
 		return option;
 	}
