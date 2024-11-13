@@ -27,6 +27,7 @@ export class DiaryService {
 	private readonly apiSecret: string; // secret key for using ai service
 	private readonly s3Client: S3Client;
 	private readonly bucketName: string;
+	private readonly s3Region: string;
 	private readonly isDevEnvironment: boolean;
 	private readonly localImagePath: string;
 
@@ -41,8 +42,9 @@ export class DiaryService {
 		this.aiServiceUrl = `http://${aiServiceHost}:${aiServicePort}`;
 		this.apiSecret = this.configService.get<string>('API_SECRET');
 		this.bucketName = this.configService.get<string>('AWS_BUCKET_NAME');
+		this.s3Region = this.configService.get<string>('AWS_REGION', 'ap-northeast-2');
 		this.s3Client = new S3Client({
-			region: this.configService.get<string>('AWS_REGION', 'ap-northeast-2')
+			region: this.s3Region
 		});
 		this.isDevEnvironment = this.configService.get<string>('NODE_ENV') === 'dev';
 		this.localImagePath = path.join(__dirname, '..', '..', 'uploads', 'images');
@@ -85,7 +87,7 @@ export class DiaryService {
 
 			await this.s3Client.send(command);
 
-			return `https://${this.bucketName}.s3.${this.configService.get<string>('AWS_REGION')}.amazonaws.com/${key}`;
+			return `https://${this.bucketName}.s3.${this.s3Region}.amazonaws.com/${key}`;
 		});
 
 		return Promise.all(uploadPromises);
