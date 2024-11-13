@@ -74,7 +74,7 @@ export class DiaryService {
 
 	private async uploadImagesToS3(files: Express.Multer.File[]): Promise<string[]> {
 		const uploadPromises = files.map(async (file, index) => {
-			const key = `${Date.now()}-${index}.${file.originalname.split('.').pop()}`;
+			const key = `diary/${Date.now()}-${index}.${file.originalname.split('.').pop()}`;
 
 			const command = new PutObjectCommand({
 				Bucket: this.bucketName,
