@@ -112,7 +112,7 @@ export class DiaryService {
 
 	private async deleteImagesFromS3(imageUrls: string[]): Promise<void> {
 		for (const url of imageUrls) {
-			const key = url.split(`${this.bucketName}/`)[1];
+			const key = url.split('.amazonaws.com/')[1];
 			if (key) {
 				try {
 					await this.s3Client.send(
