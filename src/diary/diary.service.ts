@@ -15,7 +15,6 @@ import { HttpService } from '@nestjs/axios';
 import { DiaryAnalysis } from '@src/diary/schema/diaryAnalysis.schema';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
-import { ClientSession } from 'mongoose';
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -139,17 +138,20 @@ export class DiaryService {
 				imageUrls = await this.uploadImages(files);
 			}
 
+			const { analysisResult, maskedContent } = await this.analyzeDiaryMetadata(body.content);
+
 			const createdDiary = await this.diaryModel.create({
 				...body,
+				content: maskedContent,
 				userId: userId,
 				imageBox: imageUrls
 			});
 
-			this.analyzeAndSaveDiaryMetadata(userId, createdDiary._id, body.content).catch(
-				error => {
-					console.error('Failed to analyze diary:', error);
-				}
-			);
+			await this.diaryAnalysisModel.create({
+				diaryId: createdDiary._id,
+				userId,
+				...analysisResult
+			});
 
 			return createdDiary;
 		} catch (e) {
@@ -211,11 +213,28 @@ export class DiaryService {
 
 			const updateFields: Partial<DiaryUpdateDto> = {};
 
+			if (body.content && body.content !== originalDiary.content) {
+				const { analysisResult, maskedContent } = await this.analyzeDiaryMetadata(
+					body.content
+				);
+				updateFields.content = maskedContent;
+				await this.diaryAnalysisModel.findOneAndUpdate(
+					{ diaryId: id },
+					{
+						$set: {
+							...analysisResult,
+							userId
+						}
+					},
+					{ upsert: true }
+				);
+			}
+
 			if (files && files.length > 0) {
 				try {
 					await this.deleteImages(originalDiary.imageBox);
 					const newImageUrls = await this.uploadImages(files);
-					updateFields.imageBox = newImageUrls; // 여기서 string[]을 저장
+					updateFields.imageBox = newImageUrls;
 				} catch (error) {
 					throw new InternalServerErrorException('Failed to process images');
 				}
@@ -234,12 +253,6 @@ export class DiaryService {
 					{ new: true, runValidators: true }
 				)
 				.exec();
-
-			if (body.content && body.content !== originalDiary.content) {
-				this.analyzeAndSaveDiaryMetadata(userId, id, body.content).catch(error => {
-					console.error('Failed to update diary metadata:', error);
-				});
-			}
 
 			return updatedDiary;
 		} catch (e) {
@@ -266,7 +279,7 @@ export class DiaryService {
 					console.error('Failed to delete images:', error);
 				});
 			}
-			//delete metas (optianal)
+			//delete metas (optional)
 			this.diaryAnalysisModel.findOneAndDelete({ diaryId: id }).exec();
 			return result.readOnlyData;
 		} catch (e) {
@@ -275,11 +288,9 @@ export class DiaryService {
 		}
 	}
 
-	private async analyzeAndSaveDiaryMetadata(
-		userId: string,
-		diaryId: string,
+	private async analyzeDiaryMetadata(
 		content: string
-	): Promise<void> {
+	): Promise<{ analysisResult: any; maskedContent?: string }> {
 		try {
 			const headers = { Authorization: `Bearer ${this.apiSecret}` };
 			const response = await firstValueFrom(
@@ -290,18 +301,29 @@ export class DiaryService {
 				)
 			);
 			const analysisResult = response.data;
-			await this.diaryAnalysisModel.findOneAndUpdate(
-				{ diaryId },
-				{
-					$set: {
-						...analysisResult,
-						userId
-					}
-				},
-				{ upsert: true, new: true }
-			);
+			return {
+				analysisResult,
+				maskedContent: analysisResult.hasInappropriateContent
+					? analysisResult.maskedContent
+					: content
+			};
 		} catch (error) {
 			console.error('Error during diary analysis:', error);
+			return {
+				analysisResult: {
+					category: 'Personal',
+					subcategories: [],
+					primaryEmotion: null,
+					secondaryEmotion: null,
+					keywords: [],
+					tone: null,
+					timeFocus: null,
+					confidenceScore: 0,
+					isAnalyzed: false,
+					hasInappropriateContent: false
+				},
+				maskedContent: content
+			};
 		}
 	}
 
