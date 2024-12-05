@@ -14,6 +14,7 @@ import { FriendModule } from './friend/friend.module';
 import { MyHomeModule } from './my-home/my-home.module';
 import { RoomModule } from './room/room.module';
 import { PushModule } from './push/push.module';
+import { FileManagerModule } from './file-manager/file-manager.module';
 
 @Module({
 	imports: [
@@ -35,7 +36,8 @@ import { PushModule } from './push/push.module';
 		FriendModule,
 		MyHomeModule,
 		RoomModule,
-		PushModule
+		PushModule,
+		FileManagerModule
 	],
 	controllers: [AppController],
 	providers: [AppService]
