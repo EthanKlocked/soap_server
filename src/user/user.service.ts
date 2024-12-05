@@ -28,6 +28,7 @@ import { Diary } from '@src/diary/schema/diary.schema';
 import { DiaryAnalysis } from '@src/diary/schema/diaryAnalysis.schema';
 import * as bcrypt from 'bcryptjs';
 import { isValidObjectId } from 'mongoose';
+import { FileManagerService } from '@src/file-manager/file-manager.service';
 
 //onModuleInit interface and addNewField method need to be activated for case new columns added
 @Injectable()
@@ -40,7 +41,8 @@ export class UserService /*implements OnModuleInit*/ {
 		@InjectModel(Diary.name) private diaryModel: Model<Diary>,
 		@InjectModel(DiaryAnalysis.name) private diaryAnalysisModel: Model<DiaryAnalysis>,
 		@Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-		private readonly emailService: EmailService
+		private readonly emailService: EmailService,
+		private readonly fileManagerService: FileManagerService
 	) {}
 	/* ######### OPTIONAL #########
 	async onModuleInit() {
@@ -220,6 +222,18 @@ export class UserService /*implements OnModuleInit*/ {
 			if (!deletedUser) {
 				throw new NotFoundException(`User with ID ${userId} not found`);
 			}
+
+			// Retrieve diaries associated with the user
+			const userDiaries = await this.diaryModel.find({ userId }).exec();
+
+			// Collect all image URLs from diaries
+			const imageUrls = userDiaries.flatMap(diary => diary.imageBox);
+
+			// Delete images from S3
+			if (imageUrls.length > 0) {
+				await this.fileManagerService.deleteBulkFiles(imageUrls);
+			}
+
 			// Delete associated diaries
 			await this.diaryModel.deleteMany({ userId }).exec();
 

@@ -9,6 +9,7 @@ import { FriendRequest, FriendRequestSchema } from '@src/friend/schema/friendReq
 import { Diary, DiarySchema } from '@src/diary/schema/diary.schema';
 import { DiaryAnalysis, DiaryAnalysisSchema } from '@src/diary/schema/diaryAnalysis.schema';
 import { EmailModule } from '@src/email/email.module';
+import { FileManagerModule } from '@src/file-manager/file-manager.module';
 
 @Module({
 	imports: [
@@ -20,7 +21,8 @@ import { EmailModule } from '@src/email/email.module';
 			{ name: Diary.name, schema: DiarySchema },
 			{ name: DiaryAnalysis.name, schema: DiaryAnalysisSchema }
 		]),
-		EmailModule
+		EmailModule,
+		FileManagerModule
 	],
 	controllers: [UserController],
 	providers: [UserService],
