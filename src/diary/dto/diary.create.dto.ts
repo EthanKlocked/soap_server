@@ -53,15 +53,15 @@ export class DiaryCreateDto {
 	content: string;
 
 	@ApiProperty({
-		type: 'array',
-		items: { type: 'string', format: 'binary' },
+		type: [String],
 		required: false,
-		description: 'Array of image files (max 5MB each, up to 5 images)'
+		description: 'Array of S3 image URLs (max 5 images)'
 	})
 	@IsOptional()
+	@IsArray()
 	@ArrayMaxSize(5)
-	//imageBox?: Express.Multer.File[];
-	imageBox?: any[];
+	@IsString({ each: true })
+	imageBox?: string[];
 
 	@ApiProperty({ example: 4, description: 'Core emotion score (1-5)' })
 	@IsNotEmpty()

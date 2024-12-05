@@ -9,8 +9,6 @@ import {
 	Param,
 	Patch,
 	Delete,
-	UseInterceptors,
-	UploadedFiles,
 	BadRequestException,
 	ParseIntPipe
 } from '@nestjs/common';
@@ -20,7 +18,6 @@ import {
 	ApiTags,
 	ApiSecurity,
 	ApiOperation,
-	ApiConsumes,
 	ApiBody,
 	ApiParam
 } from '@nestjs/swagger';
@@ -33,7 +30,6 @@ import { DiaryFindDto } from '@src/diary/dto/diary.find.dto';
 import { DiaryReactionDto } from '@src/diary/dto/diary.reaction.dto';
 import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
 import { DiaryStatsDto } from '@src/diary/dto/diary.stats.dto';
-import { FileFieldsInterceptor } from '@nestjs/platform-express';
 import { ReactionType } from '@src/diary/diary.interface';
 
 @UseGuards(ApiGuard, JwtAuthGuard)
@@ -104,24 +100,14 @@ export class DiaryController {
 
 	@ApiTags('Diary-Management')
 	@Post()
-	@UseInterceptors(FileFieldsInterceptor([{ name: 'imageBox', maxCount: 5 }]))
-	@ApiConsumes('multipart/form-data')
 	@ApiBody({ type: DiaryCreateDto })
 	@ApiOperation({
 		summary: 'Create a new diary',
-		description: 'Creates a new diary with content and optional image uploads'
+		description: 'Creates a new diary with content and optional image URLs'
 	})
 	@ApiResponse({ status: 201, description: 'Success' })
-	async create(
-		@Request() req,
-		@Body() createDiaryDto: DiaryCreateDto,
-		@UploadedFiles() files: { imageBox?: Express.Multer.File[] }
-	) {
-		let validatedFiles: Express.Multer.File[] = [];
-		if (files && files.imageBox) {
-			validatedFiles = this.validateFiles(files.imageBox);
-		}
-		return this.diaryService.create(req.user.id, createDiaryDto, validatedFiles);
+	async create(@Request() req, @Body() createDiaryDto: DiaryCreateDto) {
+		return this.diaryService.create(req.user.id, createDiaryDto);
 	}
 
 	@ApiTags('Diary-Management')
@@ -164,27 +150,15 @@ export class DiaryController {
 
 	@ApiTags('Diary-Management')
 	@Patch(':id')
-	@UseInterceptors(FileFieldsInterceptor([{ name: 'imageBox', maxCount: 5 }]))
-	@ApiConsumes('multipart/form-data')
 	@ApiBody({ type: DiaryUpdateDto })
 	@ApiOperation({
 		summary: 'Update a diary',
-		description:
-			'Updates an existing diary entry, including text content and images. Every fields are same with CREATE api but optional'
+		description: 'Updates an existing diary entry. All fields are optional.'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 404, description: 'User not found or not permitted to update' })
-	async update(
-		@Request() req,
-		@Param('id') id: string,
-		@Body() body: DiaryUpdateDto,
-		@UploadedFiles() files: { imageBox?: Express.Multer.File[] }
-	) {
-		let validatedFiles: Express.Multer.File[] = [];
-		if (files && files.imageBox) {
-			validatedFiles = this.validateFiles(files.imageBox);
-		}
-		return this.diaryService.update(req.user.id, id, body, validatedFiles);
+	async update(@Request() req, @Param('id') id: string, @Body() updateDiaryDto: DiaryUpdateDto) {
+		return this.diaryService.update(req.user.id, id, updateDiaryDto);
 	}
 
 	@ApiTags('Diary-Management')
@@ -248,24 +222,5 @@ export class DiaryController {
 	})
 	async toggleReaction(@Request() req, @Param('id') id: string, @Body() body: DiaryReactionDto) {
 		return this.diaryService.toggleReaction(req.user.id, id, body.reactionType);
-	}
-
-	private validateFiles(files: Express.Multer.File[]): Express.Multer.File[] {
-		const maxSize = 8 * 1024 * 1024; // 8MB
-		const allowedTypes = /(jpg|jpeg|png|gif)$/;
-
-		return files.filter(file => {
-			if (file.size > maxSize) {
-				throw new BadRequestException(
-					`File ${file.originalname} is too large. Max size is 8MB.`
-				);
-			}
-			if (!allowedTypes.test(file.originalname.toLowerCase())) {
-				throw new BadRequestException(
-					`File ${file.originalname} has an invalid file type. Allowed types are jpg, jpeg, png, gif.`
-				);
-			}
-			return true;
-		});
 	}
 }

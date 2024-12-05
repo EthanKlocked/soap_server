@@ -15,144 +15,40 @@ import { HttpService } from '@nestjs/axios';
 import { DiaryAnalysis } from '@src/diary/schema/diaryAnalysis.schema';
 import { ConfigService } from '@nestjs/config';
 import { firstValueFrom } from 'rxjs';
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import * as fs from 'fs';
-import * as path from 'path';
 import { ReactionType } from '@src/diary/diary.interface';
+import { FileManagerService } from '@src/file-manager/file-manager.service';
 
 @Injectable()
 export class DiaryService {
 	private readonly aiServiceUrl: string;
 	private readonly apiSecret: string; // secret key for using ai service
-	private readonly s3Client: S3Client;
-	private readonly bucketName: string;
-	private readonly s3Region: string;
-	private readonly isDevEnvironment: boolean;
-	private readonly localImagePath: string;
 
 	constructor(
 		@InjectModel(Diary.name) private diaryModel: Model<Diary>,
 		@InjectModel(DiaryAnalysis.name) private diaryAnalysisModel: Model<DiaryAnalysis>,
 		private readonly httpService: HttpService,
-		private configService: ConfigService
+		private configService: ConfigService,
+		private readonly fileManagerService: FileManagerService
 	) {
 		const aiServiceHost = this.configService.get<string>('AI_SERVICE_HOST_CUSTOM', 'localhost');
 		const aiServicePort = this.configService.get<number>('AI_SERVICE_PORT_CUSTOM', 3000);
 		this.aiServiceUrl = `http://${aiServiceHost}:${aiServicePort}`;
 		this.apiSecret = this.configService.get<string>('API_SECRET');
-		this.bucketName = this.configService.get<string>('AWS_BUCKET_NAME');
-		this.s3Region = this.configService.get<string>('AWS_REGION', 'ap-northeast-2');
-		this.s3Client = new S3Client({
-			region: this.s3Region
-		});
-		this.isDevEnvironment = this.configService.get<string>('NODE_ENV') === 'dev';
-		this.localImagePath = path.join(__dirname, '..', '..', 'uploads', 'images');
-		if (this.isDevEnvironment && !fs.existsSync(this.localImagePath)) {
-			fs.mkdirSync(this.localImagePath, { recursive: true });
-		}
 	}
 
-	private async uploadImages(files: Express.Multer.File[]): Promise<string[]> {
-		if (this.isDevEnvironment) {
-			return this.uploadImagesToLocal(files);
-		} else {
-			return this.uploadImagesToS3(files);
-		}
-	}
-
-	private async uploadImagesToLocal(files: Express.Multer.File[]): Promise<string[]> {
-		const uploadPromises = files.map(async (file, index) => {
-			const fileName = `${Date.now()}-${index}.${file.originalname.split('.').pop()}`;
-			const filePath = path.join(this.localImagePath, fileName);
-
-			await fs.promises.writeFile(filePath, file.buffer);
-
-			return `/uploads/images/${fileName}`;
-		});
-
-		return Promise.all(uploadPromises);
-	}
-
-	private async uploadImagesToS3(files: Express.Multer.File[]): Promise<string[]> {
-		const uploadPromises = files.map(async (file, index) => {
-			const key = `diary/${Date.now()}-${index}.${file.originalname.split('.').pop()}`;
-
-			const command = new PutObjectCommand({
-				Bucket: this.bucketName,
-				Key: key,
-				Body: file.buffer,
-				ContentType: file.mimetype
-			});
-
-			await this.s3Client.send(command);
-
-			return `https://${this.bucketName}.s3.${this.s3Region}.amazonaws.com/${key}`;
-		});
-
-		return Promise.all(uploadPromises);
-	}
-
-	private async deleteImages(imageUrls: string[]): Promise<void> {
-		if (this.isDevEnvironment) {
-			await this.deleteImagesFromLocal(imageUrls);
-		} else {
-			await this.deleteImagesFromS3(imageUrls);
-		}
-	}
-
-	private async deleteImagesFromLocal(imageUrls: string[]): Promise<void> {
-		for (const url of imageUrls) {
-			const filePath = path.join(this.localImagePath, path.basename(url));
-			if (fs.existsSync(filePath)) {
-				await fs.promises.unlink(filePath);
-			}
-		}
-	}
-
-	private async deleteImagesFromS3(imageUrls: string[]): Promise<void> {
-		for (const url of imageUrls) {
-			const key = url.split('.amazonaws.com/')[1];
-			if (key) {
-				try {
-					await this.s3Client.send(
-						new DeleteObjectCommand({
-							Bucket: this.bucketName,
-							Key: key
-						})
-					);
-				} catch (error) {
-					console.error(`Failed to delete image from S3: ${key}`, error);
-				}
-			}
-		}
-	}
-
-	async create(
-		userId: string,
-		body: DiaryCreateDto,
-		files?: Express.Multer.File[]
-	): Promise<Diary> {
+	async create(userId: string, body: DiaryCreateDto): Promise<Diary> {
 		try {
-			let imageUrls: string[] = [];
-			if (files && files.length > 0) {
-				imageUrls = await this.uploadImages(files);
-			}
-
 			const { analysisResult, maskedContent } = await this.analyzeDiaryMetadata(body.content);
-
 			const createdDiary = await this.diaryModel.create({
 				...body,
 				content: maskedContent,
-				userId: userId,
-				imageBox: imageUrls
+				userId: userId
 			});
-
 			await this.diaryAnalysisModel.create({
 				diaryId: createdDiary._id,
 				userId,
 				...analysisResult
 			});
-
 			return createdDiary;
 		} catch (e) {
 			console.log(e);
@@ -202,7 +98,7 @@ export class DiaryService {
 		}
 	}
 
-	async update(userId: string, id: string, body: DiaryUpdateDto, files?: Express.Multer.File[]) {
+	async update(userId: string, id: string, body: DiaryUpdateDto) {
 		try {
 			const originalDiary = await this.diaryModel.findOne({ _id: id, userId: userId }).exec();
 			if (!originalDiary) {
@@ -210,9 +106,7 @@ export class DiaryService {
 					'Diary not found or you do not have permission to update it'
 				);
 			}
-
 			const updateFields: Partial<DiaryUpdateDto> = {};
-
 			if (body.content && body.content !== originalDiary.content) {
 				const { analysisResult, maskedContent } = await this.analyzeDiaryMetadata(
 					body.content
@@ -229,23 +123,7 @@ export class DiaryService {
 					{ upsert: true }
 				);
 			}
-
-			if (files && files.length > 0) {
-				try {
-					await this.deleteImages(originalDiary.imageBox);
-					const newImageUrls = await this.uploadImages(files);
-					updateFields.imageBox = newImageUrls;
-				} catch (error) {
-					throw new InternalServerErrorException('Failed to process images');
-				}
-			}
-
-			for (const [key, value] of Object.entries(body)) {
-				if (key !== 'imageBox' && value !== undefined) {
-					updateFields[key] = value;
-				}
-			}
-
+			if (body.imageBox) updateFields.imageBox = body.imageBox;
 			const updatedDiary = await this.diaryModel
 				.findOneAndUpdate(
 					{ _id: id, userId: userId },
@@ -253,7 +131,6 @@ export class DiaryService {
 					{ new: true, runValidators: true }
 				)
 				.exec();
-
 			return updatedDiary;
 		} catch (e) {
 			if (e instanceof HttpException) throw e;
@@ -265,7 +142,6 @@ export class DiaryService {
 
 	async delete(userId: string, id: string) {
 		try {
-			//delete diary
 			const result = await this.diaryModel
 				.findOneAndDelete({ _id: id, userId: userId })
 				.exec();
@@ -273,14 +149,12 @@ export class DiaryService {
 				throw new NotFoundException(
 					'Diary not found or you do not have permission to delete it'
 				);
-			// delete images
 			if (result.imageBox && result.imageBox.length > 0) {
-				await this.deleteImages(result.imageBox).catch(error => {
+				await this.fileManagerService.deleteBulkFiles(result.imageBox).catch(error => {
 					console.error('Failed to delete images:', error);
 				});
 			}
-			//delete metas (optional)
-			this.diaryAnalysisModel.findOneAndDelete({ diaryId: id }).exec();
+			await this.diaryAnalysisModel.findOneAndDelete({ diaryId: id }).exec();
 			return result.readOnlyData;
 		} catch (e) {
 			if (e instanceof HttpException) throw e;

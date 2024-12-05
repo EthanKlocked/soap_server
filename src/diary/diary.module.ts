@@ -8,6 +8,7 @@ import { Diary, DiarySchema } from '@src/diary/schema/diary.schema';
 import { DiaryAnalysis, DiaryAnalysisSchema } from '@src/diary/schema/diaryAnalysis.schema';
 import { Friendship, FriendshipSchema } from '@src/friend/schema/friendship.schema';
 import { UserModule } from '@src/user/user.module';
+import { FileManagerModule } from '@src/file-manager/file-manager.module';
 
 @Module({
 	imports: [
@@ -17,7 +18,8 @@ import { UserModule } from '@src/user/user.module';
 			{ name: Friendship.name, schema: FriendshipSchema }
 		]),
 		HttpModule,
-		UserModule
+		UserModule,
+		FileManagerModule
 	],
 	controllers: [DiaryController],
 	providers: [DiaryService, DiaryAnalysisService],
