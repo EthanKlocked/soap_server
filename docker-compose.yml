@@ -55,11 +55,11 @@ services:
             MONGO_INITDB_ROOT_PASSWORD: ${DB_PASSWORD_CUSTOM}
             MONGO_INITDB_DATABASE: ${DB_NAME_CUSTOM}
         #command: mongod --port 37017 --auth
-        command: mongod --port 37017 --auth --bind_ip_all # Connnections open for lambda in VPC
+        command: mongod --port 37017 --auth --bind_ip 0.0.0.0 # Connnections open for lambda in VPC
         volumes:
             - mongodb_data:/data/db
-        expose:
-            - '37017'
+        ports:
+            - '37017:37017'
         networks:
             - app_network
         restart: unless-stopped
