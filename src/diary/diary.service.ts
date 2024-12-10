@@ -177,9 +177,12 @@ export class DiaryService {
 			const analysisResult = response.data;
 			return {
 				analysisResult,
+				maskedContent: content
+				/* // CASE : MASKING CONTENT
 				maskedContent: analysisResult.hasInappropriateContent
 					? analysisResult.maskedContent
 					: content
+				*/
 			};
 		} catch (error) {
 			console.error('Error during diary analysis:', error);
