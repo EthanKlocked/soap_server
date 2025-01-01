@@ -2,6 +2,8 @@ import { IsInt, IsOptional, IsPositive, Min, Max, IsBoolean } from 'class-valida
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
+const FUTURE_YEAR_BUFFER = 5;
+
 export class DiaryFindDto {
 	@ApiProperty({
 		example: 1,
@@ -31,7 +33,7 @@ export class DiaryFindDto {
 		example: 2023,
 		description: '조회할 연도',
 		minimum: 2000,
-		maximum: new Date().getFullYear(),
+		maximum: new Date().getFullYear() + FUTURE_YEAR_BUFFER,
 		required: false
 	})
 	@IsOptional()
