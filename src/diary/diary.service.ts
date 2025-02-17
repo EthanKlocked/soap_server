@@ -2,13 +2,16 @@ import {
 	Injectable,
 	InternalServerErrorException,
 	NotFoundException,
-	HttpException
+	HttpException,
+	ConflictException
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DiaryCreateDto } from '@src/diary/dto/diary.create.dto';
-import { DiaryUpdateDto } from './dto/diary.update.dto';
+import { DiaryUpdateDto } from '@src/diary/dto/diary.update.dto';
 import { Diary } from '@src/diary/schema/diary.schema';
+import { DiaryReport } from '@src/diary/schema/diaryReport.schema';
+import { DiaryReportDto } from '@src/diary/dto/diary.report.dto';
 import { DiaryFindDto } from '@src/diary/dto/diary.find.dto';
 import { SortOption, DiaryFindOption } from '@src/types/query.type';
 import { HttpService } from '@nestjs/axios';
@@ -26,6 +29,7 @@ export class DiaryService {
 	constructor(
 		@InjectModel(Diary.name) private diaryModel: Model<Diary>,
 		@InjectModel(DiaryAnalysis.name) private diaryAnalysisModel: Model<DiaryAnalysis>,
+		@InjectModel(DiaryReport.name) private diaryReportModel: Model<DiaryReport>,
 		private readonly httpService: HttpService,
 		private configService: ConfigService,
 		private readonly fileManagerService: FileManagerService
@@ -100,16 +104,16 @@ export class DiaryService {
 
 	async update(userId: string, id: string, body: DiaryUpdateDto) {
 		try {
+			const updateFields: Partial<DiaryUpdateDto> = { ...body };
 			const originalDiary = await this.diaryModel.findOne({ _id: id, userId: userId }).exec();
 			if (!originalDiary) {
 				throw new NotFoundException(
 					'Diary not found or you do not have permission to update it'
 				);
 			}
-			const updateFields: Partial<DiaryUpdateDto> = {};
-			if (body.content && body.content !== originalDiary.content) {
+			if (updateFields.content && updateFields.content !== originalDiary.content) {
 				const { analysisResult, maskedContent } = await this.analyzeDiaryMetadata(
-					body.content
+					updateFields.content
 				);
 				updateFields.content = maskedContent;
 				await this.diaryAnalysisModel.findOneAndUpdate(
@@ -123,7 +127,6 @@ export class DiaryService {
 					{ upsert: true }
 				);
 			}
-			if (body.imageBox) updateFields.imageBox = body.imageBox;
 			const updatedDiary = await this.diaryModel
 				.findOneAndUpdate(
 					{ _id: id, userId: userId },
@@ -302,6 +305,34 @@ export class DiaryService {
 			const metas = await this.diaryAnalysisModel.find().exec();
 			return metas;
 		} catch (e) {
+			throw new InternalServerErrorException('An unexpected error occurred');
+		}
+	}
+
+	async createReport(
+		reporterId: string,
+		diaryId: string,
+		reportDto: DiaryReportDto
+	): Promise<DiaryReport> {
+		try {
+			const diary = await this.diaryModel.findById(diaryId);
+			if (!diary) throw new NotFoundException('Diary not found');
+			if (diary.userId.toString() === reporterId)
+				throw new ConflictException('Cannot report your own diary');
+			const existingReport = await this.diaryReportModel.findOne({
+				diaryId,
+				reporterId
+			});
+			if (existingReport) throw new ConflictException('You have already reported this diary');
+			const report = await this.diaryReportModel.create({
+				diaryId,
+				reporterId,
+				reason: reportDto.reason,
+				description: reportDto.description
+			});
+			return report;
+		} catch (e) {
+			if (e instanceof HttpException) throw e;
 			throw new InternalServerErrorException('An unexpected error occurred');
 		}
 	}

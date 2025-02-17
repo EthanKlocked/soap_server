@@ -30,6 +30,7 @@ import { DiaryFindDto } from '@src/diary/dto/diary.find.dto';
 import { DiaryReactionDto } from '@src/diary/dto/diary.reaction.dto';
 import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
 import { DiaryStatsDto } from '@src/diary/dto/diary.stats.dto';
+import { DiaryReportDto } from '@src/diary/dto/diary.report.dto';
 import { ReactionType } from '@src/diary/diary.interface';
 
 @UseGuards(ApiGuard, JwtAuthGuard)
@@ -222,5 +223,20 @@ export class DiaryController {
 	})
 	async toggleReaction(@Request() req, @Param('id') id: string, @Body() body: DiaryReactionDto) {
 		return this.diaryService.toggleReaction(req.user.id, id, body.reactionType);
+	}
+
+	@ApiTags('Diary-Interactions')
+	@Post('report/:id')
+	@ApiOperation({
+		summary: 'Report a diary',
+		description: 'Creates a report for inappropriate diary content'
+	})
+	@ApiParam({ name: 'id', description: 'Diary ID' })
+	@ApiResponse({ status: 201, description: 'Success' })
+	@ApiResponse({ status: 404, description: 'Diary not found' })
+	@ApiResponse({ status: 409, description: 'Cannot report own diary or duplicate report' })
+	@ApiBody({ type: DiaryReportDto })
+	async createReport(@Request() req, @Param('id') id: string, @Body() reportDto: DiaryReportDto) {
+		return this.diaryService.createReport(req.user.id, id, reportDto);
 	}
 }
