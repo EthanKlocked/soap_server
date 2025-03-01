@@ -18,6 +18,9 @@ class Item {
 	@Prop({ required: true, type: Number })
 	y: number;
 
+	@Prop({ required: true, type: Number })
+	zIndex: number;
+
 	@Prop({ required: true, type: Boolean, default: true })
 	visible: boolean;
 
