@@ -9,7 +9,9 @@ import {
 	Patch,
 	Delete,
 	ForbiddenException,
-	Query
+	Query,
+	HttpCode,
+	HttpStatus
 } from '@nestjs/common';
 import {
 	ApiResponse,
@@ -155,6 +157,7 @@ export class MyHomeController {
 
 	@ApiTags('My-Home')
 	@Post()
+	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({
 		summary: '새 MyHome 생성',
 		description:
@@ -166,6 +169,7 @@ export class MyHomeController {
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
+	@ApiResponse({ status: 409, description: 'Duplicate content' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async create(@Request() req, @Body() createMyHomeDto: Omit<CreateMyHomeDto, 'userId'>) {
 		return this.myHomeService.create({
@@ -189,6 +193,7 @@ export class MyHomeController {
 		description: 'Invalid API KEY or Unauthorized access'
 	})
 	@ApiResponse({ status: 404, description: 'MyHome not found' })
+	@ApiResponse({ status: 409, description: 'Duplicate content' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async update(
 		@Request() req,
