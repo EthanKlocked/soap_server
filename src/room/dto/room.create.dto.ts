@@ -13,6 +13,7 @@ export class CreateRoomDto {
 				name: 'sofa',
 				x: 100,
 				y: 150,
+				zIndex: 1,
 				visible: true,
 				type: 'hobby'
 			},
@@ -20,6 +21,7 @@ export class CreateRoomDto {
 				name: 'picture',
 				x: 150,
 				y: 300,
+				zIndex: 2,
 				visible: false,
 				type: 'interior'
 			}

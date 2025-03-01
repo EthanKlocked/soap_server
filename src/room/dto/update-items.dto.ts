@@ -13,6 +13,10 @@ export class UpdateItemDto {
 	@IsOptional()
 	y?: number;
 
+	@IsNumber()
+	@IsOptional()
+	zIndex?: number;
+
 	@IsBoolean()
 	@IsOptional()
 	visible?: boolean;
