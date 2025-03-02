@@ -1,5 +1,5 @@
 import { IsString, IsEnum, IsObject, IsMongoId, ValidateNested, IsOptional } from 'class-validator';
-import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { ApiProperty, getSchemaPath, ApiExtraModels } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { CategoryType, ContentType, RatingType } from '../schema/my-home.schema';
 
@@ -134,6 +134,13 @@ class UpdateBookContentDto {
 	rating?: RatingType;
 }
 
+// 모든 DTO를 ApiExtraModels로 등록
+@ApiExtraModels(
+	UpdateMovieContentDto,
+	UpdateMusicContentDto,
+	UpdateYoutubeContentDto,
+	UpdateBookContentDto
+)
 export class UpdateMyHomeDto {
 	@ApiProperty({
 		enum: CategoryType,
@@ -156,6 +163,15 @@ export class UpdateMyHomeDto {
 
 	@ApiProperty({
 		description: '수정된 컨텐츠 정보',
+		discriminator: {
+			propertyName: 'category',
+			mapping: {
+				[CategoryType.MOVIE]: 'UpdateMovieContentDto',
+				[CategoryType.MUSIC]: 'UpdateMusicContentDto',
+				[CategoryType.YOUTUBE]: 'UpdateYoutubeContentDto',
+				[CategoryType.BOOK]: 'UpdateBookContentDto'
+			}
+		},
 		oneOf: [
 			{ $ref: getSchemaPath(UpdateMovieContentDto) },
 			{ $ref: getSchemaPath(UpdateMusicContentDto) },

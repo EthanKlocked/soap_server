@@ -3,6 +3,7 @@ export const DEFAULT_ROOM_ITEMS = [
 		name: 'books',
 		x: 1.47,
 		y: 1,
+		zIndex: 1,
 		visible: true,
 		type: 'hobby'
 	},
@@ -10,6 +11,7 @@ export const DEFAULT_ROOM_ITEMS = [
 		name: 'movie',
 		x: 2.67,
 		y: 27.23,
+		zIndex: 1,
 		visible: true,
 		type: 'hobby'
 	},
@@ -17,6 +19,7 @@ export const DEFAULT_ROOM_ITEMS = [
 		name: 'music',
 		x: 8.67,
 		y: 14,
+		zIndex: 1,
 		visible: true,
 		type: 'hobby'
 	},
@@ -24,6 +27,7 @@ export const DEFAULT_ROOM_ITEMS = [
 		name: 'picture',
 		x: 40,
 		y: 5.9,
+		zIndex: 1,
 		visible: true,
 		type: 'interior'
 	},
@@ -31,6 +35,7 @@ export const DEFAULT_ROOM_ITEMS = [
 		name: 'plant',
 		x: 50.67,
 		y: 28.99,
+		zIndex: 1,
 		visible: true,
 		type: 'interior'
 	},
@@ -38,6 +43,7 @@ export const DEFAULT_ROOM_ITEMS = [
 		name: 'sofa',
 		x: 66.67,
 		y: 25.99,
+		zIndex: 1,
 		visible: true,
 		type: 'interior'
 	},
@@ -45,6 +51,7 @@ export const DEFAULT_ROOM_ITEMS = [
 		name: 'windowDay',
 		x: 66.67,
 		y: 5.2,
+		zIndex: 1,
 		visible: true,
 		type: 'interior'
 	},
@@ -52,6 +59,7 @@ export const DEFAULT_ROOM_ITEMS = [
 		name: 'windowNight',
 		x: 66.67,
 		y: 5.2,
+		zIndex: 1,
 		visible: true,
 		type: 'interior'
 	},
@@ -59,6 +67,7 @@ export const DEFAULT_ROOM_ITEMS = [
 		name: 'youtube',
 		x: 40,
 		y: 17.89,
+		zIndex: 1,
 		visible: true,
 		type: 'hobby'
 	}

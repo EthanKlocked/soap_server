@@ -24,6 +24,13 @@ export class ItemDto {
 	y: number;
 
 	@ApiProperty({
+		example: 1,
+		description: '아이템의 z-index'
+	})
+	@IsNumber()
+	zIndex: number;
+
+	@ApiProperty({
 		example: true,
 		description: '아이템 노출/비노출'
 	})

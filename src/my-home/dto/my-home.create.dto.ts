@@ -1,14 +1,16 @@
 import { IsString, IsEnum, IsObject, IsMongoId, ValidateNested, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
-import { ApiProperty, getSchemaPath } from '@nestjs/swagger';
+import { ApiProperty, getSchemaPath, ApiExtraModels } from '@nestjs/swagger';
 import { CategoryType, RatingType, ContentType } from '../schema/my-home.schema';
 
+// 베이스 DTO 클래스
 class BaseContentDto {
 	@ApiProperty({ example: '컨텐츠 제목' })
 	@IsString()
 	title: string;
 }
 
+// 영화 DTO 클래스
 class MovieContentDto extends BaseContentDto {
 	@ApiProperty({ example: 'https://example.com/movie.jpg', required: false })
 	@IsOptional()
@@ -40,17 +42,19 @@ class MovieContentDto extends BaseContentDto {
 	rating: RatingType;
 }
 
+// 음악 DTO 클래스
 class MusicContentDto extends BaseContentDto {
 	@ApiProperty({ example: 'https://example.com/album.jpg', required: false })
 	@IsOptional()
 	@IsString()
 	imageUrl?: string;
 
-	@ApiProperty({ example: 'Cool Channel' })
+	@ApiProperty({ example: 'BTS' })
 	@IsString()
 	artist: string;
 }
 
+// 유튜브 DTO 클래스
 class YoutubeContentDto extends BaseContentDto {
 	@ApiProperty({ example: 'Cool Channel' })
 	@IsString()
@@ -70,6 +74,7 @@ class YoutubeContentDto extends BaseContentDto {
 	thumbnailUrl?: string;
 }
 
+// 책 DTO 클래스
 class BookContentDto extends BaseContentDto {
 	@ApiProperty({ example: 'https://example.com/book.jpg', required: false })
 	@IsOptional()
@@ -97,6 +102,8 @@ class BookContentDto extends BaseContentDto {
 	rating: RatingType;
 }
 
+// 중요: ApiExtraModels 데코레이터로 모든 DTO 등록
+@ApiExtraModels(MovieContentDto, MusicContentDto, YoutubeContentDto, BookContentDto)
 export class CreateMyHomeDto {
 	@ApiProperty({
 		enum: CategoryType,
@@ -108,7 +115,8 @@ export class CreateMyHomeDto {
 
 	@ApiProperty({
 		example: '정말 재미있는 영화였습니다. 강력 추천합니다!',
-		description: '사용자의 리뷰 내용'
+		description: '사용자의 리뷰 내용',
+		required: false
 	})
 	@IsOptional()
 	@IsString()
@@ -116,6 +124,15 @@ export class CreateMyHomeDto {
 
 	@ApiProperty({
 		description: '컨텐츠의 상세 정보. 카테고리에 따라 다른 구조를 가집니다.',
+		discriminator: {
+			propertyName: 'category',
+			mapping: {
+				[CategoryType.MOVIE]: 'MovieContentDto',
+				[CategoryType.MUSIC]: 'MusicContentDto',
+				[CategoryType.YOUTUBE]: 'YoutubeContentDto',
+				[CategoryType.BOOK]: 'BookContentDto'
+			}
+		},
 		oneOf: [
 			{ $ref: getSchemaPath(MovieContentDto) },
 			{ $ref: getSchemaPath(MusicContentDto) },
@@ -125,18 +142,15 @@ export class CreateMyHomeDto {
 	})
 	@IsObject()
 	@ValidateNested()
-	@Type(obj => {
-		switch (obj.object.category) {
-			case CategoryType.MOVIE:
-				return MovieContentDto;
-			case CategoryType.MUSIC:
-				return MusicContentDto;
-			case CategoryType.YOUTUBE:
-				return YoutubeContentDto;
-			case CategoryType.BOOK:
-				return BookContentDto;
-			default:
-				return BaseContentDto;
+	@Type(() => Object, {
+		discriminator: {
+			property: 'category',
+			subTypes: [
+				{ value: MovieContentDto, name: CategoryType.MOVIE },
+				{ value: MusicContentDto, name: CategoryType.MUSIC },
+				{ value: YoutubeContentDto, name: CategoryType.YOUTUBE },
+				{ value: BookContentDto, name: CategoryType.BOOK }
+			]
 		}
 	})
 	content: ContentType;
