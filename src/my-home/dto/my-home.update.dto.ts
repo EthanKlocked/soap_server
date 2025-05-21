@@ -1,7 +1,7 @@
 import { IsString, IsEnum, IsObject, IsMongoId, ValidateNested, IsOptional } from 'class-validator';
 import { ApiProperty, getSchemaPath, ApiExtraModels } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { CategoryType, ContentType, RatingType } from '../schema/my-home.schema';
+import { CategoryType, ContentType } from '../schema/my-home.schema';
 
 class UpdateMovieContentDto {
 	@ApiProperty({ example: 'https://example.com/movie.jpg', required: false })
@@ -46,7 +46,7 @@ class UpdateMovieContentDto {
 	})
 	@IsOptional()
 	@IsEnum([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5])
-	rating?: RatingType;
+	rating?: number;
 }
 
 class UpdateMusicContentDto {
@@ -131,7 +131,7 @@ class UpdateBookContentDto {
 	})
 	@IsOptional()
 	@IsEnum([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5])
-	rating?: RatingType;
+	rating?: number;
 }
 
 // 모든 DTO를 ApiExtraModels로 등록
