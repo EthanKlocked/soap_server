@@ -27,6 +27,7 @@ import { ApiGuard } from '@src/auth/guard/api.guard';
 import { MyHomeService } from './my-home.service';
 import { CreateMyHomeDto } from './dto/my-home.create.dto';
 import { UpdateMyHomeDto } from './dto/my-home.update.dto';
+import { CheckDuplicateDto } from './dto/my-home.check-duplicate.dto';
 import { CategoryType, ContentType } from './schema/my-home.schema';
 
 @ApiBearerAuth()
@@ -156,6 +157,51 @@ export class MyHomeController {
 	}
 
 	@ApiTags('My-Home')
+	@Post('check-duplicate')
+	@HttpCode(HttpStatus.OK)
+	@ApiOperation({
+		summary: '중복 컨텐츠 확인',
+		description: '컨텐츠의 중복 여부를 확인합니다. 중복이 있으면 409 에러를 반환합니다.'
+	})
+	@ApiBody({
+		type: CheckDuplicateDto
+	})
+	@ApiResponse({
+		status: 200,
+		description: '중복 없음',
+		schema: { type: 'object', properties: { isDuplicate: { type: 'boolean', example: false } } }
+	})
+	@ApiResponse({
+		status: 409,
+		description: '중복 있음',
+		schema: {
+			type: 'object',
+			properties: {
+				isDuplicate: { type: 'boolean', example: true },
+				message: { type: 'string', example: '이 컨텐츠는 이미 추가되어 있습니다.' }
+			}
+		}
+	})
+	@ApiResponse({ status: 400, description: 'Request without API KEY' })
+	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
+	@ApiResponse({ status: 500, description: 'Server Error' })
+	async checkDuplicate(@Request() req, @Body() checkDuplicateDto: CheckDuplicateDto) {
+		try {
+			await this.myHomeService.checkDuplicate(
+				req.user.id,
+				checkDuplicateDto.category,
+				checkDuplicateDto.content
+			);
+			return { isDuplicate: false };
+		} catch (error) {
+			if (error.status === 409) {
+				return { isDuplicate: true, message: error.message };
+			}
+			throw error;
+		}
+	}
+
+	@ApiTags('My-Home')
 	@Post()
 	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({
@@ -169,7 +215,6 @@ export class MyHomeController {
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 409, description: 'Duplicate content' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async create(@Request() req, @Body() createMyHomeDto: Omit<CreateMyHomeDto, 'userId'>) {
 		return this.myHomeService.create({
@@ -193,7 +238,6 @@ export class MyHomeController {
 		description: 'Invalid API KEY or Unauthorized access'
 	})
 	@ApiResponse({ status: 404, description: 'MyHome not found' })
-	@ApiResponse({ status: 409, description: 'Duplicate content' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async update(
 		@Request() req,

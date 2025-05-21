@@ -20,13 +20,6 @@ export class MyHomeService {
 
 	async create(createMyHomeDto: CreateMyHomeDto): Promise<MyHome> {
 		try {
-			// 중복 체크 - 미리 확인하고 싶을 때 사용
-			await this.checkDuplicate(
-				createMyHomeDto.userId.toString(),
-				createMyHomeDto.category,
-				createMyHomeDto.content
-			);
-
 			const createdMyHome = new this.myHomeModel(createMyHomeDto);
 			return await createdMyHome.save();
 		} catch (error) {
@@ -77,53 +70,16 @@ export class MyHomeService {
 
 		// content 필드 업데이트
 		if ('content' in updateMyHomeDto && updateMyHomeDto.content) {
-			// 업데이트된 content로 중복 체크 수행 (필요한 경우)
-			const updatedContent = {
+			existingMyHome.content = {
 				...existingMyHome.content,
 				...updateMyHomeDto.content
 			};
-
-			// 타이틀이나 작가 등의 고유값이 변경된 경우에만 중복 체크
-			if (
-				this.hasUniqueFieldsChanged(
-					existingMyHome.content,
-					updatedContent,
-					existingMyHome.category
-				)
-			) {
-				await this.checkDuplicateForUpdate(
-					existingMyHome.userId.toString(),
-					existingMyHome.category,
-					updatedContent,
-					id
-				);
-			}
-
-			existingMyHome.content = updatedContent;
 		} else if (!('review' in updateMyHomeDto)) {
 			// updateMyHomeDto가 Partial<MyHome['content']>인 경우
-			const updatedContent = {
+			existingMyHome.content = {
 				...existingMyHome.content,
 				...updateMyHomeDto
 			};
-
-			// 타이틀이나 작가 등의 고유값이 변경된 경우에만 중복 체크
-			if (
-				this.hasUniqueFieldsChanged(
-					existingMyHome.content,
-					updatedContent,
-					existingMyHome.category
-				)
-			) {
-				await this.checkDuplicateForUpdate(
-					existingMyHome.userId.toString(),
-					existingMyHome.category,
-					updatedContent,
-					id
-				);
-			}
-
-			existingMyHome.content = updatedContent;
 		}
 
 		try {
