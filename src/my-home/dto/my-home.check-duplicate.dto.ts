@@ -12,36 +12,72 @@ export class CheckDuplicateDto {
 	category: CategoryType;
 
 	@ApiProperty({
-		description: '중복 체크할 컨텐츠의 핵심 정보',
-		examples: {
-			movie: {
-				summary: '영화 예시',
-				value: {
-					title: '인셉션',
-					director: '크리스토퍼 놀란'
-				}
+		description: '중복 체크할 컨텐츠의 핵심 정보 (카테고리에 따라 필요한 필드가 다름)',
+		oneOf: [
+			{
+				title: '영화 (MOVIE)',
+				type: 'object',
+				properties: {
+					title: {
+						type: 'string',
+						description: '영화 제목',
+						example: '인셉션'
+					},
+					director: {
+						type: 'string',
+						description: '감독',
+						example: '크리스토퍼 놀란'
+					}
+				},
+				required: ['title', 'director']
 			},
-			music: {
-				summary: '음악 예시',
-				value: {
-					title: 'Dynamite',
-					artist: 'BTS'
-				}
+			{
+				title: '음악 (MUSIC)',
+				type: 'object',
+				properties: {
+					title: {
+						type: 'string',
+						description: '곡 제목',
+						example: 'Dynamite'
+					},
+					artist: {
+						type: 'string',
+						description: '아티스트',
+						example: 'BTS'
+					}
+				},
+				required: ['title', 'artist']
 			},
-			youtube: {
-				summary: '유튜브 예시',
-				value: {
-					url: 'https://www.youtube.com/watch?v=abc123'
-				}
+			{
+				title: '유튜브 (YOUTUBE)',
+				type: 'object',
+				properties: {
+					url: {
+						type: 'string',
+						description: '유튜브 URL',
+						example: 'https://www.youtube.com/watch?v=abc123'
+					}
+				},
+				required: ['url']
 			},
-			book: {
-				summary: '책 예시',
-				value: {
-					title: '해리포터',
-					author: 'J.K. 롤링'
-				}
+			{
+				title: '책 (BOOK)',
+				type: 'object',
+				properties: {
+					title: {
+						type: 'string',
+						description: '책 제목',
+						example: '해리포터'
+					},
+					author: {
+						type: 'string',
+						description: '저자',
+						example: 'J.K. 롤링'
+					}
+				},
+				required: ['title', 'author']
 			}
-		}
+		]
 	})
 	@IsObject()
 	content: any;
