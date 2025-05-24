@@ -14,6 +14,7 @@ async function bootstrap() {
 			'http://localhost:5173',
 			'http://192.168.35.247:5173',
 			'http://192.168.35.192:5173',
+			'http://192.168.35.6:5173',
 			'http://192.168.0.55:5173',
 			'http://172.30.1.48:5173',
 			'https://soaf-web.vercel.app'
