@@ -1,15 +1,7 @@
-import { IsEnum, IsObject, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
-import { ApiProperty, getSchemaPath, ApiExtraModels } from '@nestjs/swagger';
-import { CategoryType, ContentType } from '../schema/my-home.schema';
-import {
-	MovieContentDto,
-	MusicContentDto,
-	YoutubeContentDto,
-	BookContentDto
-} from './my-home.content.dto';
+import { IsEnum, IsObject } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
+import { CategoryType } from '../schema/my-home.schema';
 
-@ApiExtraModels(MovieContentDto, MusicContentDto, YoutubeContentDto, BookContentDto)
 export class CheckDuplicateDto {
 	@ApiProperty({
 		enum: CategoryType,
@@ -20,35 +12,37 @@ export class CheckDuplicateDto {
 	category: CategoryType;
 
 	@ApiProperty({
-		description: '컨텐츠의 상세 정보. 카테고리에 따라 다른 구조를 가집니다.',
-		discriminator: {
-			propertyName: 'category',
-			mapping: {
-				[CategoryType.MOVIE]: 'MovieContentDto',
-				[CategoryType.MUSIC]: 'MusicContentDto',
-				[CategoryType.YOUTUBE]: 'YoutubeContentDto',
-				[CategoryType.BOOK]: 'BookContentDto'
+		description: '중복 체크할 컨텐츠의 핵심 정보',
+		examples: {
+			movie: {
+				summary: '영화 예시',
+				value: {
+					title: '인셉션',
+					director: '크리스토퍼 놀란'
+				}
+			},
+			music: {
+				summary: '음악 예시',
+				value: {
+					title: 'Dynamite',
+					artist: 'BTS'
+				}
+			},
+			youtube: {
+				summary: '유튜브 예시',
+				value: {
+					url: 'https://www.youtube.com/watch?v=abc123'
+				}
+			},
+			book: {
+				summary: '책 예시',
+				value: {
+					title: '해리포터',
+					author: 'J.K. 롤링'
+				}
 			}
-		},
-		oneOf: [
-			{ $ref: getSchemaPath(MovieContentDto) },
-			{ $ref: getSchemaPath(MusicContentDto) },
-			{ $ref: getSchemaPath(YoutubeContentDto) },
-			{ $ref: getSchemaPath(BookContentDto) }
-		]
-	})
-	@IsObject()
-	@ValidateNested()
-	@Type(() => Object, {
-		discriminator: {
-			property: 'category',
-			subTypes: [
-				{ value: MovieContentDto, name: CategoryType.MOVIE },
-				{ value: MusicContentDto, name: CategoryType.MUSIC },
-				{ value: YoutubeContentDto, name: CategoryType.YOUTUBE },
-				{ value: BookContentDto, name: CategoryType.BOOK }
-			]
 		}
 	})
-	content: ContentType;
+	@IsObject()
+	content: any;
 }
