@@ -27,6 +27,7 @@ import { ApiGuard } from '@src/auth/guard/api.guard';
 import { MyHomeService } from './my-home.service';
 import { CreateMyHomeDto } from './dto/my-home.create.dto';
 import { UpdateMyHomeDto } from './dto/my-home.update.dto';
+import { CheckDuplicateDto } from './dto/my-home.check-duplicate.dto';
 import { CategoryType, ContentType } from './schema/my-home.schema';
 
 @ApiBearerAuth()
@@ -151,8 +152,73 @@ export class MyHomeController {
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	@ApiQuery({ name: 'userId', required: false, type: String })
 	@ApiQuery({ name: 'category', required: false, enum: CategoryType })
-	async findAll(@Query('userId') userId: string, @Query('category') category?: CategoryType) {
-		return this.myHomeService.findAll(userId, category);
+	async findAll(
+		@Request() req,
+		@Query('userId') userId?: string,
+		@Query('category') category?: CategoryType
+	) {
+		// userId가 제공되지 않으면 토큰에서 추출 (본인 마이홈)
+		const targetUserId = userId || req.user.id;
+		return this.myHomeService.findAll(targetUserId, category);
+	}
+
+	@ApiTags('My-Home')
+	@Post('check-duplicate')
+	@HttpCode(HttpStatus.OK)
+	@ApiOperation({
+		summary: '중복 컨텐츠 확인',
+		description:
+			'컨텐츠의 중복 여부를 확인합니다. 중복이 있으면 true, 없으면 false를 반환합니다.'
+	})
+	@ApiBody({
+		type: CheckDuplicateDto
+	})
+	@ApiResponse({
+		status: 200,
+		description: '중복 체크 결과',
+		schema: {
+			type: 'object',
+			properties: {
+				isDuplicate: { type: 'boolean', example: false },
+				message: { type: 'string', example: '중복된 컨텐츠가 있습니다.' }
+			}
+		}
+	})
+	@ApiResponse({ status: 400, description: 'Request without API KEY' })
+	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
+	@ApiResponse({ status: 500, description: 'Server Error' })
+	async checkDuplicate(@Request() req, @Body() checkDuplicateDto: CheckDuplicateDto) {
+		const isDuplicate = await this.myHomeService.checkDuplicate(
+			req.user.id,
+			checkDuplicateDto.category,
+			checkDuplicateDto.content
+		);
+
+		return {
+			isDuplicate,
+			message: isDuplicate
+				? this.generateDuplicateMessage(
+						checkDuplicateDto.category,
+						checkDuplicateDto.content
+					)
+				: '중복된 컨텐츠가 없습니다.'
+		};
+	}
+
+	// 중복 메시지 생성 헬퍼 메서드
+	private generateDuplicateMessage(category: CategoryType, content: any): string {
+		switch (category) {
+			case CategoryType.MOVIE:
+				return `영화 '${content.title}' (감독: ${content.director})는 이미 추가되어 있습니다.`;
+			case CategoryType.MUSIC:
+				return `음악 '${content.title}' (아티스트: ${content.artist})는 이미 추가되어 있습니다.`;
+			case CategoryType.YOUTUBE:
+				return `유튜브 영상 '${content.title}'은 이미 추가되어 있습니다.`;
+			case CategoryType.BOOK:
+				return `책 '${content.title}' (저자: ${content.author})는 이미 추가되어 있습니다.`;
+			default:
+				return '중복된 컨텐츠가 있습니다.';
+		}
 	}
 
 	@ApiTags('My-Home')
@@ -169,7 +235,6 @@ export class MyHomeController {
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
-	@ApiResponse({ status: 409, description: 'Duplicate content' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async create(@Request() req, @Body() createMyHomeDto: Omit<CreateMyHomeDto, 'userId'>) {
 		return this.myHomeService.create({
@@ -193,7 +258,6 @@ export class MyHomeController {
 		description: 'Invalid API KEY or Unauthorized access'
 	})
 	@ApiResponse({ status: 404, description: 'MyHome not found' })
-	@ApiResponse({ status: 409, description: 'Duplicate content' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async update(
 		@Request() req,
