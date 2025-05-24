@@ -152,8 +152,14 @@ export class MyHomeController {
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	@ApiQuery({ name: 'userId', required: false, type: String })
 	@ApiQuery({ name: 'category', required: false, enum: CategoryType })
-	async findAll(@Query('userId') userId: string, @Query('category') category?: CategoryType) {
-		return this.myHomeService.findAll(userId, category);
+	async findAll(
+		@Request() req,
+		@Query('userId') userId?: string,
+		@Query('category') category?: CategoryType
+	) {
+		// userId가 제공되지 않으면 토큰에서 추출 (본인 마이홈)
+		const targetUserId = userId || req.user.id;
+		return this.myHomeService.findAll(targetUserId, category);
 	}
 
 	@ApiTags('My-Home')
