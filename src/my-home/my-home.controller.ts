@@ -161,24 +161,20 @@ export class MyHomeController {
 	@HttpCode(HttpStatus.OK)
 	@ApiOperation({
 		summary: '중복 컨텐츠 확인',
-		description: '컨텐츠의 중복 여부를 확인합니다. 중복이 있으면 409 에러를 반환합니다.'
+		description:
+			'컨텐츠의 중복 여부를 확인합니다. 중복이 있으면 true, 없으면 false를 반환합니다.'
 	})
 	@ApiBody({
 		type: CheckDuplicateDto
 	})
 	@ApiResponse({
 		status: 200,
-		description: '중복 없음',
-		schema: { type: 'object', properties: { isDuplicate: { type: 'boolean', example: false } } }
-	})
-	@ApiResponse({
-		status: 409,
-		description: '중복 있음',
+		description: '중복 체크 결과',
 		schema: {
 			type: 'object',
 			properties: {
-				isDuplicate: { type: 'boolean', example: true },
-				message: { type: 'string', example: '이 컨텐츠는 이미 추가되어 있습니다.' }
+				isDuplicate: { type: 'boolean', example: false },
+				message: { type: 'string', example: '중복된 컨텐츠가 있습니다.' }
 			}
 		}
 	})
@@ -186,18 +182,36 @@ export class MyHomeController {
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async checkDuplicate(@Request() req, @Body() checkDuplicateDto: CheckDuplicateDto) {
-		try {
-			await this.myHomeService.checkDuplicate(
-				req.user.id,
-				checkDuplicateDto.category,
-				checkDuplicateDto.content
-			);
-			return { isDuplicate: false };
-		} catch (error) {
-			if (error.status === 409) {
-				return { isDuplicate: true, message: error.message };
-			}
-			throw error;
+		const isDuplicate = await this.myHomeService.checkDuplicate(
+			req.user.id,
+			checkDuplicateDto.category,
+			checkDuplicateDto.content
+		);
+
+		return {
+			isDuplicate,
+			message: isDuplicate
+				? this.generateDuplicateMessage(
+						checkDuplicateDto.category,
+						checkDuplicateDto.content
+					)
+				: '중복된 컨텐츠가 없습니다.'
+		};
+	}
+
+	// 중복 메시지 생성 헬퍼 메서드
+	private generateDuplicateMessage(category: CategoryType, content: any): string {
+		switch (category) {
+			case CategoryType.MOVIE:
+				return `영화 '${content.title}' (감독: ${content.director})는 이미 추가되어 있습니다.`;
+			case CategoryType.MUSIC:
+				return `음악 '${content.title}' (아티스트: ${content.artist})는 이미 추가되어 있습니다.`;
+			case CategoryType.YOUTUBE:
+				return `유튜브 영상 '${content.title}'은 이미 추가되어 있습니다.`;
+			case CategoryType.BOOK:
+				return `책 '${content.title}' (저자: ${content.author})는 이미 추가되어 있습니다.`;
+			default:
+				return '중복된 컨텐츠가 있습니다.';
 		}
 	}
 
