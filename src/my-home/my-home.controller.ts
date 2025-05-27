@@ -180,7 +180,7 @@ export class MyHomeController {
 			type: 'object',
 			properties: {
 				isDuplicate: { type: 'boolean', example: false },
-				message: { type: 'string', example: '중복된 컨텐츠가 있습니다.' }
+				message: { type: 'string', example: '중복된 컨텐츠가 없습니다.' }
 			}
 		}
 	})

@@ -1,4 +1,5 @@
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { ItemType } from '../room.constants';
 
 export class UpdateItemDto {
 	@IsString()
@@ -23,5 +24,5 @@ export class UpdateItemDto {
 
 	@IsString()
 	@IsOptional()
-	type?: 'hobby' | 'interior';
+	type?: ItemType;
 }

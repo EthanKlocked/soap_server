@@ -11,22 +11,28 @@ import { UpdateItemDto } from './dto/update-items.dto';
 export class RoomService {
 	constructor(@InjectModel(Room.name) private roomModel: Model<Room>) {}
 
-	async findByUserId(userId: string) {
-		const room = await this.roomModel.findOne({ userId: new Types.ObjectId(userId) });
+	/**
+	 * 사용자 ID로 방을 조회하고, 없으면 기본 방을 생성하여 반환
+	 */
+	async findByUserId(userId: string): Promise<Room> {
+		let room = await this.roomModel.findOne({ userId: new Types.ObjectId(userId) });
 
 		if (!room) {
-			// 방이 없을 때 기본값 리턴
-			return new this.roomModel({
+			// 방이 없을 때 기본값으로 새 방 생성 및 저장
+			room = new this.roomModel({
 				userId: new Types.ObjectId(userId),
 				items: DEFAULT_ROOM_ITEMS
 			});
+			await room.save();
 		}
 
 		return room;
 	}
 
+	/**
+	 * 방 정보를 업데이트하거나 새로 생성
+	 */
 	async update(userId: string, updateDto: UpdateRoomDto | UpdateItemDto): Promise<Room> {
-		// 한 번만 findOne 실행
 		let room = await this.roomModel
 			.findOne({
 				userId: new Types.ObjectId(userId)
@@ -73,6 +79,9 @@ export class RoomService {
 		return room.save();
 	}
 
+	/**
+	 * 사용자의 방을 삭제
+	 */
 	async remove(userId: string): Promise<Room> {
 		const deletedRoom = await this.roomModel.findOneAndDelete({ userId }).exec();
 		if (!deletedRoom) {
