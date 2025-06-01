@@ -12,6 +12,7 @@ import {
 } from './schema/my-home.schema';
 import { CreateMyHomeDto } from './dto/my-home.create.dto';
 import { UpdateMyHomeDto } from './dto/my-home.update.dto';
+import { PaginationQueryDto, PaginatedResponseDto, PaginationMetaDto } from './dto/pagination.dto';
 
 @Injectable()
 export class MyHomeService {
@@ -33,6 +34,54 @@ export class MyHomeService {
 		};
 
 		return this.myHomeModel.find(query).exec();
+	}
+
+	/**
+	 * 페이지네이션이 적용된 MyHome 목록 조회
+	 */
+	async findAllPaginated(
+		userId: string,
+		paginationQuery: PaginationQueryDto,
+		category?: CategoryType
+	): Promise<PaginatedResponseDto<MyHome>> {
+		const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = paginationQuery;
+
+		const query = {
+			...{ userId },
+			...(category && { category })
+		};
+
+		// 정렬 객체 생성
+		const sort: Record<string, 1 | -1> = {};
+		sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+
+		// 페이지네이션 계산
+		const skip = (page - 1) * limit;
+
+		// 전체 개수와 데이터를 병렬로 조회하여 성능 최적화
+		const [totalItems, data] = await Promise.all([
+			this.myHomeModel.countDocuments(query),
+			this.myHomeModel.find(query).sort(sort).skip(skip).limit(limit).exec()
+		]);
+
+		// 메타 정보 계산
+		const totalPages = Math.ceil(totalItems / limit);
+		const hasNextPage = page < totalPages;
+		const hasPreviousPage = page > 1;
+
+		const meta: PaginationMetaDto = {
+			currentPage: page,
+			itemsPerPage: limit,
+			totalItems,
+			totalPages,
+			hasNextPage,
+			hasPreviousPage
+		};
+
+		return {
+			data,
+			meta
+		};
 	}
 
 	async findOne(id: string): Promise<MyHome> {
