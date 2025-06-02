@@ -28,6 +28,7 @@ import { MyHomeService } from './my-home.service';
 import { CreateMyHomeDto } from './dto/my-home.create.dto';
 import { UpdateMyHomeDto } from './dto/my-home.update.dto';
 import { CheckDuplicateDto } from './dto/my-home.check-duplicate.dto';
+import { PaginationQueryDto } from './dto/pagination.dto';
 import { CategoryType, ContentType } from './schema/my-home.schema';
 
 @ApiBearerAuth()
@@ -107,44 +108,107 @@ export class MyHomeController {
 	@ApiOperation({
 		summary: 'MyHome 정보 조회',
 		description:
-			'모든 MyHome 컨텐츠 정보를 조회하거나 특정 사용자의 MyHome 컨텐츠 목록을 조회합니다.'
+			'MyHome 컨텐츠 목록을 조회합니다. page 또는 limit 파라미터가 있으면 페이지네이션이 적용되고, 없으면 전체 데이터를 반환합니다.'
 	})
 	@ApiResponse({
 		status: 200,
-		description: 'Success',
+		description:
+			'Success - 페이지네이션 파라미터가 있을 때는 {data, meta} 형태, 없을 때는 배열 형태로 반환',
 		schema: {
-			type: 'array',
-			items: {
-				type: 'object',
-				properties: {
-					id: { type: 'string', example: '507f1f77bcf86cd799439011' },
-					category: {
-						type: 'string',
-						enum: Object.values(CategoryType),
-						example: CategoryType.MUSIC
-					},
-					review: { type: 'string', example: '좋은 음악이었습니다.' },
-					content: {
+			oneOf: [
+				{
+					// 페이지네이션 적용된 응답
+					type: 'object',
+					properties: {
+						data: {
+							type: 'array',
+							items: {
+								type: 'object',
+								properties: {
+									id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+									category: {
+										type: 'string',
+										enum: Object.values(CategoryType),
+										example: CategoryType.MUSIC
+									},
+									review: { type: 'string', example: '좋은 음악이었습니다.' },
+									content: {
+										type: 'object',
+										properties: {
+											imageUrl: {
+												type: 'string',
+												example: 'https://example.com/album.jpg'
+											},
+											title: { type: 'string', example: 'Dynamite' },
+											artist: { type: 'string', example: 'BTS' }
+										}
+									},
+									userId: { type: 'string', example: '507f1f77bcf86cd799439012' },
+									createdAt: {
+										type: 'string',
+										format: 'date-time',
+										example: '2024-10-01T09:00:00.000Z'
+									},
+									updatedAt: {
+										type: 'string',
+										format: 'date-time',
+										example: '2024-10-01T09:00:00.000Z'
+									}
+								}
+							}
+						},
+						meta: {
+							type: 'object',
+							properties: {
+								currentPage: { type: 'number', example: 1 },
+								itemsPerPage: { type: 'number', example: 10 },
+								totalItems: { type: 'number', example: 50 },
+								totalPages: { type: 'number', example: 5 },
+								hasNextPage: { type: 'boolean', example: true },
+								hasPreviousPage: { type: 'boolean', example: false }
+							}
+						}
+					}
+				},
+				{
+					// 기존 배열 응답 (페이지네이션 없음)
+					type: 'array',
+					items: {
 						type: 'object',
 						properties: {
-							imageUrl: { type: 'string', example: 'https://example.com/album.jpg' },
-							title: { type: 'string', example: 'Dynamite' },
-							artist: { type: 'string', example: 'BTS' }
+							id: { type: 'string', example: '507f1f77bcf86cd799439011' },
+							category: {
+								type: 'string',
+								enum: Object.values(CategoryType),
+								example: CategoryType.MUSIC
+							},
+							review: { type: 'string', example: '좋은 음악이었습니다.' },
+							content: {
+								type: 'object',
+								properties: {
+									imageUrl: {
+										type: 'string',
+										example: 'https://example.com/album.jpg'
+									},
+									title: { type: 'string', example: 'Dynamite' },
+									artist: { type: 'string', example: 'BTS' }
+								}
+							},
+							userId: { type: 'string', example: '507f1f77bcf86cd799439012' },
+							createdAt: {
+								type: 'string',
+								format: 'date-time',
+								example: '2024-10-01T09:00:00.000Z'
+							},
+							updatedAt: {
+								type: 'string',
+								format: 'date-time',
+								example: '2024-10-01T09:00:00.000Z'
+							}
 						}
-					},
-					userId: { type: 'string', example: '507f1f77bcf86cd799439012' },
-					createdAt: {
-						type: 'string',
-						format: 'date-time',
-						example: '2024-10-01T09:00:00.000Z'
-					},
-					updatedAt: {
-						type: 'string',
-						format: 'date-time',
-						example: '2024-10-01T09:00:00.000Z'
 					}
 				}
-			}
+			]
 		}
 	})
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
@@ -152,13 +216,45 @@ export class MyHomeController {
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	@ApiQuery({ name: 'userId', required: false, type: String })
 	@ApiQuery({ name: 'category', required: false, enum: CategoryType })
+	@ApiQuery({
+		name: 'page',
+		required: false,
+		type: Number,
+		description: '페이지 번호 (기본값: 1)'
+	})
+	@ApiQuery({
+		name: 'limit',
+		required: false,
+		type: Number,
+		description: '페이지당 항목 수 (기본값: 10, 최대: 100)'
+	})
+	@ApiQuery({
+		name: 'sortBy',
+		required: false,
+		enum: ['createdAt', 'updatedAt', 'category'],
+		description: '정렬 기준 (기본값: createdAt)'
+	})
+	@ApiQuery({
+		name: 'sortOrder',
+		required: false,
+		enum: ['asc', 'desc'],
+		description: '정렬 순서 (기본값: desc)'
+	})
 	async findAll(
 		@Request() req,
 		@Query('userId') userId?: string,
-		@Query('category') category?: CategoryType
+		@Query('category') category?: CategoryType,
+		@Query() paginationQuery?: PaginationQueryDto
 	) {
 		// userId가 제공되지 않으면 토큰에서 추출 (본인 마이홈)
 		const targetUserId = userId || req.user.id;
+
+		// 페이지네이션 파라미터가 있으면 페이지네이션 적용
+		if (paginationQuery && (paginationQuery.page || paginationQuery.limit)) {
+			return this.myHomeService.findAllPaginated(targetUserId, paginationQuery, category);
+		}
+
+		// 기존 방식 (하위 호환성)
 		return this.myHomeService.findAll(targetUserId, category);
 	}
 
