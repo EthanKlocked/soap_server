@@ -251,7 +251,12 @@ export class MyHomeController {
 
 		// 페이지네이션 파라미터가 있으면 페이지네이션 적용
 		if (paginationQuery && (paginationQuery.page || paginationQuery.limit)) {
-			return this.myHomeService.findAllPaginated(targetUserId, paginationQuery, category);
+			const result = await this.myHomeService.findAllPaginated(
+				targetUserId,
+				paginationQuery,
+				category
+			);
+			return result;
 		}
 
 		// 기존 방식 (하위 호환성)
