@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsOptional, IsInt, Min, Max, IsString, IsIn } from 'class-validator';
+import { IsOptional, IsInt, Min, Max, IsString, IsIn, IsEnum } from 'class-validator';
+import { CategoryType } from '../schema/my-home.schema';
 
 export class PaginationQueryDto {
 	@ApiProperty({
@@ -54,6 +55,24 @@ export class PaginationQueryDto {
 	@IsString()
 	@IsIn(['asc', 'desc'])
 	sortOrder?: 'asc' | 'desc' = 'desc';
+
+	@ApiProperty({
+		description: '카테고리 필터',
+		enum: CategoryType,
+		required: false
+	})
+	@IsOptional()
+	@IsEnum(CategoryType)
+	category?: CategoryType;
+
+	@ApiProperty({
+		description: '사용자 ID',
+		example: '507f1f77bcf86cd799439012',
+		required: false
+	})
+	@IsOptional()
+	@IsString()
+	userId?: string;
 }
 
 export class PaginationMetaDto {
