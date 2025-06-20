@@ -65,8 +65,8 @@ export class FriendService {
 					receiver.name
 				),
 				data: {
-					type: 'NAVIGATION',
-					nav_link: 'notification'
+					type: 'NAVIGATE',
+					nav_link: 'notifications'
 					// requestId: requestId,
 					// senderId: sender._id.toString(),
 					// senderName: sender.name
