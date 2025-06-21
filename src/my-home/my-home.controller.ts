@@ -25,7 +25,7 @@ import {
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 import { MyHomeService } from './my-home.service';
-import { CreateMyHomeDto } from './dto/my-home.create.dto';
+import { CreateMyHomeDto, CreateMyHomeWithUserIdDto } from './dto/my-home.create.dto';
 import { UpdateMyHomeDto } from './dto/my-home.update.dto';
 import { CheckDuplicateDto } from './dto/my-home.check-duplicate.dto';
 import { PaginationQueryDto } from './dto/pagination.dto';
@@ -337,11 +337,12 @@ export class MyHomeController {
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
-	async create(@Request() req, @Body() createMyHomeDto: Omit<CreateMyHomeDto, 'userId'>) {
-		return this.myHomeService.create({
+	async create(@Request() req, @Body() createMyHomeDto: CreateMyHomeDto) {
+		const createDto: CreateMyHomeWithUserIdDto = {
 			...createMyHomeDto,
 			userId: req.user.id
-		});
+		};
+		return this.myHomeService.create(createDto);
 	}
 
 	@ApiTags('My-Home')

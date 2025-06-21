@@ -61,7 +61,9 @@ export class CreateMyHomeDto {
 		}
 	})
 	content: ContentType;
+}
 
+export class CreateMyHomeWithUserIdDto extends CreateMyHomeDto {
 	@ApiProperty({
 		example: '507f1f77bcf86cd799439011',
 		description: '사용자 ID (MongoDB ObjectId)'
