@@ -1,4 +1,4 @@
-import { IsString, IsEnum, IsObject, IsMongoId, ValidateNested, IsOptional } from 'class-validator';
+import { IsString, IsEnum, IsObject, IsMongoId, IsOptional } from 'class-validator';
 import { ApiProperty, getSchemaPath, ApiExtraModels } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { CategoryType, ContentType } from '../schema/my-home.schema';
@@ -163,15 +163,6 @@ export class UpdateMyHomeDto {
 
 	@ApiProperty({
 		description: '수정된 컨텐츠 정보',
-		discriminator: {
-			propertyName: 'category',
-			mapping: {
-				[CategoryType.MOVIE]: 'UpdateMovieContentDto',
-				[CategoryType.MUSIC]: 'UpdateMusicContentDto',
-				[CategoryType.YOUTUBE]: 'UpdateYoutubeContentDto',
-				[CategoryType.BOOK]: 'UpdateBookContentDto'
-			}
-		},
 		oneOf: [
 			{ $ref: getSchemaPath(UpdateMovieContentDto) },
 			{ $ref: getSchemaPath(UpdateMusicContentDto) },
@@ -182,19 +173,7 @@ export class UpdateMyHomeDto {
 	})
 	@IsOptional()
 	@IsObject()
-	@ValidateNested()
-	@Type(() => Object, {
-		keepDiscriminatorProperty: true,
-		discriminator: {
-			property: 'category',
-			subTypes: [
-				{ value: UpdateMovieContentDto, name: CategoryType.MOVIE },
-				{ value: UpdateMusicContentDto, name: CategoryType.MUSIC },
-				{ value: UpdateYoutubeContentDto, name: CategoryType.YOUTUBE },
-				{ value: UpdateBookContentDto, name: CategoryType.BOOK }
-			]
-		}
-	})
+	@Type(() => Object)
 	content?: Partial<ContentType>;
 
 	@ApiProperty({
