@@ -249,8 +249,8 @@ export class MyHomeController {
 		// userId가 제공되지 않으면 토큰에서 추출 (본인 마이홈)
 		const targetUserId = userId || req.user.id;
 
-		// 페이지네이션 파라미터가 있으면 페이지네이션 적용
-		if (paginationQuery && (paginationQuery.page || paginationQuery.limit)) {
+		// 페이지네이션 파라미터가 유효한 값으로 있으면 페이지네이션 적용
+		if (paginationQuery && (paginationQuery.page > 0 || paginationQuery.limit > 0)) {
 			const result = await this.myHomeService.findAllPaginated(
 				targetUserId,
 				paginationQuery,
