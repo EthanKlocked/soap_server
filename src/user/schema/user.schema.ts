@@ -54,6 +54,12 @@ export class User extends Document {
 	@MaxLength(60)
 	status?: string;
 
+	@Prop({
+		default: false
+	})
+	@IsBoolean()
+	isSuspended: boolean;
+
 	readonly readOnlyData: {
 		id: string;
 		email: string;
@@ -62,6 +68,7 @@ export class User extends Document {
 		sns: string;
 		imgUrl: string;
 		status: string;
+		isSuspended: boolean;
 	};
 }
 
@@ -75,6 +82,7 @@ UserSchema.virtual('readOnlyData').get(function (this: User) {
 		alarm: this.alarm,
 		sns: this.sns,
 		imgUrl: this.imgUrl,
-		status: this.status
+		status: this.status,
+		isSuspended: this.isSuspended
 	};
 });
