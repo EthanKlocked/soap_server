@@ -226,14 +226,14 @@ export class DiaryService {
 				reactionArray.splice(userIndex, 1);
 			} else {
 				// Clear reaction of user (must be one) * This logic would be removed if the case of multiple reactions for one user
-				for (const key in diary.reactions) {
-					const otherReactionArray = diary.reactions[key];
-					const previousIndex = otherReactionArray.indexOf(userId);
-					if (previousIndex > -1) {
-						otherReactionArray.splice(previousIndex, 1);
-						break;
-					}
-				}
+				// for (const key in diary.reactions) {
+				// 	const otherReactionArray = diary.reactions[key];
+				// 	const previousIndex = otherReactionArray.indexOf(userId);
+				// 	if (previousIndex > -1) {
+				// 		otherReactionArray.splice(previousIndex, 1);
+				// 		break;
+				// 	}
+				// }
 				// User hasn't reacted, so add the reaction
 				reactionArray.push(userId);
 			}
