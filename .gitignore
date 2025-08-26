@@ -58,3 +58,6 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Server-specific files (서버에서만 생성되는 파일)
+certbot/
