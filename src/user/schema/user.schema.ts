@@ -60,6 +60,13 @@ export class User extends Document {
 	@IsBoolean()
 	isSuspended: boolean;
 
+	@Prop({
+		default: false
+	})
+	@IsBoolean()
+	@IsOptional()
+	marketingConsent?: boolean;
+
 	readonly readOnlyData: {
 		id: string;
 		email: string;
@@ -69,6 +76,7 @@ export class User extends Document {
 		imgUrl: string;
 		status: string;
 		isSuspended: boolean;
+		marketingConsent: boolean;
 	};
 }
 
@@ -83,6 +91,7 @@ UserSchema.virtual('readOnlyData').get(function (this: User) {
 		sns: this.sns,
 		imgUrl: this.imgUrl,
 		status: this.status,
-		isSuspended: this.isSuspended
+		isSuspended: this.isSuspended,
+		marketingConsent: this.marketingConsent
 	};
 });
