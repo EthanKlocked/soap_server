@@ -19,6 +19,7 @@ export class FileManagerController {
 	@ApiTags('File-Management')
 	@UseGuards(JwtAuthGuard)
 	@Post('presigned-url')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Get presigned URL',
 		description: 'Generates a presigned URL for direct S3 file upload'
@@ -34,6 +35,7 @@ export class FileManagerController {
 	@ApiTags('File-Management')
 	@UseGuards(JwtAuthGuard)
 	@Delete('file')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Delete file',
 		description: 'Deletes a file from S3 storage'

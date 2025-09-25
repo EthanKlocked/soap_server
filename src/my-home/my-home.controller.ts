@@ -34,6 +34,7 @@ import { CategoryType, ContentType } from './schema/my-home.schema';
 @ApiBearerAuth()
 @UseGuards(ApiGuard, JwtAuthGuard)
 @ApiSecurity('api-key')
+@ApiSecurity('x-access-token')
 @Controller('my-home')
 export class MyHomeController {
 	constructor(private readonly myHomeService: MyHomeService) {}

@@ -4,7 +4,7 @@ import { AppService } from '@src/app.service';
 import { UserModule } from '@src/user/user.module';
 import { EmailModule } from '@src/email/email.module';
 import { AuthModule } from '@src/auth/auth.module';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigModule } from '@nestjs/config';
 import { CacheModule } from '@nestjs/cache-manager';
 import { MongooseModule } from '@nestjs/mongoose';
 import { cacheConfig } from '@src/config/cache.config';
@@ -15,6 +15,8 @@ import { MyHomeModule } from './my-home/my-home.module';
 import { RoomModule } from './room/room.module';
 import { PushModule } from './push/push.module';
 import { FileManagerModule } from './file-manager/file-manager.module';
+import { MembershipModule } from './membership/membership.module';
+import { CouponModule } from './coupon/coupon.module';
 
 @Module({
 	imports: [
@@ -37,7 +39,9 @@ import { FileManagerModule } from './file-manager/file-manager.module';
 		MyHomeModule,
 		RoomModule,
 		PushModule,
-		FileManagerModule
+		FileManagerModule,
+		MembershipModule,
+		CouponModule
 	],
 	controllers: [AppController],
 	providers: [AppService]

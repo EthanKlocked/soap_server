@@ -9,7 +9,6 @@ import {
 	Param,
 	Patch,
 	Delete,
-	BadRequestException,
 	ParseIntPipe
 } from '@nestjs/common';
 import {
@@ -36,6 +35,7 @@ import { ReactionType } from '@src/diary/diary.interface';
 @UseGuards(ApiGuard, JwtAuthGuard)
 @Controller('diary')
 @ApiSecurity('api-key')
+@ApiSecurity('x-access-token')
 @ApiResponse({ status: 400, description: 'Request without API KEY' })
 @ApiResponse({ status: 401, description: 'Empty / Invalid token' })
 @ApiResponse({ status: 403, description: 'Invalid API KEY' })

@@ -34,6 +34,7 @@ import { FriendService } from '@src/friend/friend.service';
 @ApiBearerAuth()
 @UseGuards(ApiGuard, JwtAuthGuard)
 @ApiSecurity('api-key')
+@ApiSecurity('x-access-token')
 @Controller('room')
 export class RoomController {
 	constructor(

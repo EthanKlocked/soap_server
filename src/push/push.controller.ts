@@ -24,6 +24,7 @@ import { ApiGuard } from '@src/auth/guard/api.guard';
 @ApiBearerAuth()
 @UseGuards(ApiGuard, JwtAuthGuard)
 @ApiSecurity('api-key')
+@ApiSecurity('x-access-token')
 @ApiTags('Push')
 @Controller('push')
 export class PushController {

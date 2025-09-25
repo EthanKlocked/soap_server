@@ -28,14 +28,24 @@ Authorization: Bearer <API_KEY>
 			`
 		)
 		.setVersion('1.0')
+		.addBearerAuth(
+			{
+				type: 'http',
+				scheme: 'bearer',
+				name: 'API Key',
+				description: 'Enter your API key (Bearer prefix will be added automatically)',
+				in: 'header'
+			},
+			'api-key'
+		)
 		.addApiKey(
 			{
 				type: 'apiKey',
-				name: 'Authorization',
+				name: 'x-access-token',
 				in: 'header',
-				description: 'Enter your API key with "Bearer " prefix. Example: "Bearer <API_KEY>"'
+				description: 'JWT Token'
 			},
-			'api-key'
+			'x-access-token'
 		)
 		.build();
 

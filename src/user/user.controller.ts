@@ -180,6 +180,7 @@ export class UserController {
 	@ApiTags('User-Auth')
 	@UseGuards(JwtAuthGuard)
 	@Post('logout')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'User logout',
 		description: 'Logs out the user and invalidates the current session'
@@ -207,6 +208,7 @@ export class UserController {
 	@ApiTags('User-Info')
 	@UseGuards(JwtAuthGuard)
 	@Get('profile')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Get user profile',
 		description: 'Retrieves the profile information of the authenticated user'
@@ -238,6 +240,7 @@ export class UserController {
 	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Patch()
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Update user info',
 		description: 'Updates the profile information of the authenticated user'
@@ -253,6 +256,7 @@ export class UserController {
 	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Delete('delete')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Delete user account',
 		description: "Permanently deletes the authenticated user's account"
@@ -271,6 +275,7 @@ export class UserController {
 	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Post('block')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Block a user',
 		description: 'Blocks a specified user, preventing interactions'
@@ -294,6 +299,7 @@ export class UserController {
 	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Delete('unblock/:blockedUserId')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Unblock a user',
 		description: 'Removes the block restriction on a previously blocked user'
@@ -309,6 +315,7 @@ export class UserController {
 	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Get('is-blocked/:targetUserId')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Check block status',
 		description: 'Checks if a specified user is blocked by the authenticated user'
@@ -328,6 +335,7 @@ export class UserController {
 	@ApiTags('User-Management')
 	@UseGuards(JwtAuthGuard)
 	@Get('blocked-users')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Get blocked users list',
 		description: 'Retrieves a list of all users blocked by the authenticated user'
@@ -342,6 +350,7 @@ export class UserController {
 	@ApiTags('User-Extra')
 	@UseGuards(JwtAuthGuard)
 	@Get('ctoken')
+	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Get chat token',
 		description: 'Retrieves the token required for connecting to the chat server'
