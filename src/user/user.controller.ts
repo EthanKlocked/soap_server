@@ -32,6 +32,7 @@ import { UserBlockDto } from '@src/user/dto/user.block.dto';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 import { SnsValidationResultCase } from '@src/auth/auth.interface';
+import { MembershipGuard } from '@src/membership/guard/membership.guard';
 
 @UseGuards(ApiGuard)
 @Controller('user')
@@ -206,19 +207,38 @@ export class UserController {
 	}
 
 	@ApiTags('User-Info')
-	@UseGuards(JwtAuthGuard)
+	@UseGuards(JwtAuthGuard, MembershipGuard)
 	@Get('profile')
 	@ApiSecurity('x-access-token')
 	@ApiOperation({
 		summary: 'Get user profile',
-		description: 'Retrieves the profile information of the authenticated user'
+		description:
+			'Retrieves the profile information of the authenticated user (with membership info)'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
 	@ApiResponse({ status: 401, description: 'Empty / Invalid token' })
 	@ApiResponse({ status: 404, description: 'User not found' })
 	@ApiResponse({ status: 410, description: 'Token has expired' })
 	async getProfile(@Request() req) {
-		return await this.userService.findProfile(req.user.id);
+		const userProfile = await this.userService.findProfile(req.user.id);
+		return {
+			...userProfile,
+			membershipInfo: req.membership
+				? {
+						hasActiveMembership: true,
+						membershipType: req.membership.membershipType,
+						startDate: req.membership.startDate,
+						endDate: req.membership.endDate,
+						isActive: req.membership.isActive
+					}
+				: {
+						hasActiveMembership: false,
+						membershipType: null,
+						startDate: null,
+						endDate: null,
+						isActive: false
+					}
+		};
 	}
 
 	@ApiTags('User-Info')

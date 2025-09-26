@@ -1,8 +1,9 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
-import { ApiResponse, ApiSecurity, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, UseGuards, Request, Post, Body } from '@nestjs/common';
+import { ApiResponse, ApiSecurity, ApiOperation, ApiTags, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
 import { MembershipService } from './membership.service';
+import { MembershipDeactivateDto } from './dto/membership.deactivate.dto';
 
 @UseGuards(ApiGuard, JwtAuthGuard)
 @ApiSecurity('api-key')
@@ -113,5 +114,38 @@ export class MembershipController {
 		return {
 			memberships: memberships.map(m => m.readOnlyData)
 		};
+	}
+
+	@Post('admin/deactivate')
+	@ApiOperation({
+		summary: '멤버십 강제 비활성화 (관리자용)',
+		description: `사용자의 활성 멤버십을 강제로 비활성화합니다. 테스트 및 관리 목적으로 사용됩니다.
+
+두 가지 방법을 지원합니다:
+- set_inactive: isActive를 false로 설정 (기본값)
+- expire_now: endDate를 과거로 설정하여 자동 만료 처리`
+	})
+	@ApiBody({ type: MembershipDeactivateDto })
+	@ApiResponse({
+		status: 200,
+		description: '비활성화 성공',
+		schema: {
+			type: 'object',
+			properties: {
+				success: { type: 'boolean', example: true },
+				deactivatedCount: { type: 'number', example: 1 },
+				method: { type: 'string', example: '활성 상태를 비활성으로 변경' },
+				message: { type: 'string', example: '1개의 활성 멤버십이 비활성화되었습니다.' }
+			}
+		}
+	})
+	@ApiResponse({ status: 400, description: 'Request without API KEY' })
+	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
+	@ApiResponse({ status: 500, description: 'Server Error' })
+	async deactivateUserMembership(@Body() deactivateDto: MembershipDeactivateDto) {
+		return await this.membershipService.adminDeactivateUserMembership(
+			deactivateDto.userId,
+			deactivateDto.method
+		);
 	}
 }

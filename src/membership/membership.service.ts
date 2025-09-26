@@ -109,6 +109,56 @@ export class MembershipService {
 	async checkFeatureAccess(userId: string, featureType: string): Promise<boolean> {
 		// 기본적으로 멤버십이 있으면 모든 기능 사용 가능
 		// 향후 기능별 세부 제한 로직 추가 가능
+		console.log(featureType);
 		return await this.hasMembership(userId);
+	}
+
+	/**
+	 * 관리자용: 사용자의 활성 멤버십 강제 비활성화
+	 */
+	async adminDeactivateUserMembership(
+		userId: string,
+		method: 'set_inactive' | 'expire_now' = 'set_inactive'
+	): Promise<{
+		success: boolean;
+		deactivatedCount: number;
+		method: string;
+		message: string;
+	}> {
+		const now = new Date();
+		let updateData: any;
+		let methodDescription: string;
+
+		if (method === 'set_inactive') {
+			// 방법 1: isActive를 false로 설정
+			updateData = { isActive: false };
+			methodDescription = '활성 상태를 비활성으로 변경';
+		} else {
+			// 방법 2: endDate를 현재 시간보다 하루 전으로 설정 (만료 처리)
+			const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+			updateData = { endDate: yesterday };
+			methodDescription = '만료일을 과거로 변경하여 자동 만료 처리';
+		}
+
+		// 사용자의 활성 멤버십들을 모두 비활성화
+		const result = await this.userMembershipModel.updateMany(
+			{
+				userId,
+				isActive: true,
+				startDate: { $lte: now },
+				endDate: { $gte: now }
+			},
+			updateData
+		);
+
+		return {
+			success: result.modifiedCount > 0,
+			deactivatedCount: result.modifiedCount,
+			method: methodDescription,
+			message:
+				result.modifiedCount > 0
+					? `${result.modifiedCount}개의 활성 멤버십이 비활성화되었습니다.`
+					: '비활성화할 활성 멤버십이 없습니다.'
+		};
 	}
 }

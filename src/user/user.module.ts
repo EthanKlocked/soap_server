@@ -10,6 +10,7 @@ import { Diary, DiarySchema } from '@src/diary/schema/diary.schema';
 import { DiaryAnalysis, DiaryAnalysisSchema } from '@src/diary/schema/diaryAnalysis.schema';
 import { EmailModule } from '@src/email/email.module';
 import { FileManagerModule } from '@src/file-manager/file-manager.module';
+import { MembershipModule } from '@src/membership/membership.module';
 
 @Module({
 	imports: [
@@ -22,7 +23,8 @@ import { FileManagerModule } from '@src/file-manager/file-manager.module';
 			{ name: DiaryAnalysis.name, schema: DiaryAnalysisSchema }
 		]),
 		EmailModule,
-		FileManagerModule
+		FileManagerModule,
+		MembershipModule
 	],
 	controllers: [UserController],
 	providers: [UserService],
