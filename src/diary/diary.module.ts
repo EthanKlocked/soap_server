@@ -10,6 +10,8 @@ import { DiaryReport, DiaryReportSchema } from '@src/diary/schema/diaryReport.sc
 import { Friendship, FriendshipSchema } from '@src/friend/schema/friendship.schema';
 import { UserModule } from '@src/user/user.module';
 import { FileManagerModule } from '@src/file-manager/file-manager.module';
+import { MembershipModule } from '@src/membership/membership.module';
+import { ThrottleModule } from '@src/throttle/throttle.module';
 
 @Module({
 	imports: [
@@ -21,7 +23,9 @@ import { FileManagerModule } from '@src/file-manager/file-manager.module';
 		]),
 		HttpModule,
 		UserModule,
-		FileManagerModule
+		FileManagerModule,
+		MembershipModule,
+		ThrottleModule
 	],
 	controllers: [DiaryController],
 	providers: [DiaryService, DiaryAnalysisService],

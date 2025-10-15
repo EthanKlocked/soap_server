@@ -24,6 +24,9 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
+import { MembershipGuard } from '@src/membership/guard/membership.guard';
+import { PaymentRequiredException } from '@src/membership/exception/payment-required.exception';
+import { MEMBERSHIP_LIMITS } from '@src/membership/membership.constants';
 import { MyHomeService } from './my-home.service';
 import { CreateMyHomeDto, CreateMyHomeWithUserIdDto } from './dto/my-home.create.dto';
 import { UpdateMyHomeDto } from './dto/my-home.update.dto';
@@ -324,6 +327,7 @@ export class MyHomeController {
 	}
 
 	@ApiTags('My-Home')
+	@UseGuards(MembershipGuard)
 	@Post()
 	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({
@@ -336,9 +340,23 @@ export class MyHomeController {
 	})
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Request without API KEY' })
+	@ApiResponse({ status: 402, description: 'Membership required' })
 	@ApiResponse({ status: 403, description: 'Invalid API KEY' })
 	@ApiResponse({ status: 500, description: 'Server Error' })
 	async create(@Request() req, @Body() createMyHomeDto: CreateMyHomeDto) {
+		// 무료 사용자는 카테고리별 30개 제한
+		if (!req.membership) {
+			const count = await this.myHomeService.getCountByCategory(
+				req.user.id,
+				createMyHomeDto.category
+			);
+			if (count >= MEMBERSHIP_LIMITS.CONTENT_BOX.FREE) {
+				throw new PaymentRequiredException(
+					`무료 사용자는 카테고리별 최대 30개까지 저장 가능합니다. 멤버십 가입 시 무제한으로 저장할 수 있습니다.`
+				);
+			}
+		}
+
 		const createDto: CreateMyHomeWithUserIdDto = {
 			...createMyHomeDto,
 			userId: req.user.id

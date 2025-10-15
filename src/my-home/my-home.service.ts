@@ -192,4 +192,8 @@ export class MyHomeService {
 				throw new Error(`Unsupported category: ${category}`);
 		}
 	}
+
+	async getCountByCategory(userId: string, category: CategoryType): Promise<number> {
+		return this.myHomeModel.countDocuments({ userId, category });
+	}
 }

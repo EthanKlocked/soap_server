@@ -22,6 +22,7 @@ import {
 } from '@nestjs/swagger';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
+import { MembershipGuard } from '@src/membership/guard/membership.guard';
 import { DiaryService } from '@src/diary/diary.service';
 import { DiaryCreateDto } from '@src/diary/dto/diary.create.dto';
 import { DiaryUpdateDto } from '@src/diary/dto/diary.update.dto';
@@ -31,6 +32,13 @@ import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
 import { DiaryStatsDto } from '@src/diary/dto/diary.stats.dto';
 import { DiaryReportDto } from '@src/diary/dto/diary.report.dto';
 import { ReactionType } from '@src/diary/diary.interface';
+import {
+	MEMBERSHIP_LIMITS,
+	THROTTLE_FEATURES,
+	THROTTLE_TTL
+} from '@src/membership/membership.constants';
+import { ThrottleService } from '@src/throttle/throttle.service';
+import { PaymentRequiredException } from '@src/membership/exception/payment-required.exception';
 
 @UseGuards(ApiGuard, JwtAuthGuard)
 @Controller('diary')
@@ -44,10 +52,12 @@ import { ReactionType } from '@src/diary/diary.interface';
 export class DiaryController {
 	constructor(
 		private readonly diaryService: DiaryService,
-		private readonly diaryAnalysisService: DiaryAnalysisService
+		private readonly diaryAnalysisService: DiaryAnalysisService,
+		private readonly throttleService: ThrottleService
 	) {}
 
 	@ApiTags('Diary-Analysis')
+	@UseGuards(MembershipGuard)
 	@Get('similar-users')
 	@ApiOperation({
 		summary: 'Get similar users',
@@ -55,6 +65,7 @@ export class DiaryController {
 			'Retrieves a list of users with similar diary entries based on content analysis'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiResponse({ status: 402, description: 'Membership required' })
 	@ApiQuery({
 		name: 'limit',
 		required: false,
@@ -72,6 +83,23 @@ export class DiaryController {
 		@Query('limit', new ParseIntPipe({ optional: true })) limit = 5,
 		@Query('diaryId') diaryId?: string
 	) {
+		const maxCalls = req.membership
+			? MEMBERSHIP_LIMITS.AI_MATCHING.PREMIUM
+			: MEMBERSHIP_LIMITS.AI_MATCHING.FREE;
+
+		// 무제한(null)이 아닌 경우만 throttle 체크
+		// NOTE: 현재는 결과와 무관하게 호출 시 카운트됨 (빈 배열이어도 카운트)
+		// 만약 결과에 따른 조건부 카운트가 필요하다면 friend.controller.ts의
+		// sendFriendRequest 패턴 참고 (check → 실행 → increment 순서로 분리)
+		if (maxCalls !== null) {
+			await this.throttleService.checkAndIncrement(
+				req.user.id,
+				THROTTLE_FEATURES.AI_MATCHING,
+				maxCalls,
+				THROTTLE_TTL
+			);
+		}
+
 		return this.diaryAnalysisService.getSimilarUsers(req.user.id, limit, diaryId);
 	}
 
@@ -100,6 +128,7 @@ export class DiaryController {
 	}
 
 	@ApiTags('Diary-Management')
+	@UseGuards(MembershipGuard)
 	@Post()
 	@ApiBody({ type: DiaryCreateDto })
 	@ApiOperation({
@@ -107,7 +136,18 @@ export class DiaryController {
 		description: 'Creates a new diary with content and optional image URLs'
 	})
 	@ApiResponse({ status: 201, description: 'Success' })
+	@ApiResponse({ status: 402, description: 'Membership required' })
 	async create(@Request() req, @Body() createDiaryDto: DiaryCreateDto) {
+		const maxImages = req.membership
+			? MEMBERSHIP_LIMITS.DIARY_IMAGES.PREMIUM
+			: MEMBERSHIP_LIMITS.DIARY_IMAGES.FREE;
+
+		if (createDiaryDto.imageBox && createDiaryDto.imageBox.length > maxImages) {
+			throw new PaymentRequiredException(
+				`무료 사용자는 최대 ${MEMBERSHIP_LIMITS.DIARY_IMAGES.FREE}장까지 업로드 가능합니다. 멤버십 가입 시 ${MEMBERSHIP_LIMITS.DIARY_IMAGES.PREMIUM}장까지 가능합니다.`
+			);
+		}
+
 		return this.diaryService.create(req.user.id, createDiaryDto);
 	}
 
@@ -150,6 +190,7 @@ export class DiaryController {
 	}
 
 	@ApiTags('Diary-Management')
+	@UseGuards(MembershipGuard)
 	@Patch(':id')
 	@ApiBody({ type: DiaryUpdateDto })
 	@ApiOperation({
@@ -157,8 +198,19 @@ export class DiaryController {
 		description: 'Updates an existing diary entry. All fields are optional.'
 	})
 	@ApiResponse({ status: 200, description: 'Success' })
+	@ApiResponse({ status: 402, description: 'Membership required' })
 	@ApiResponse({ status: 404, description: 'User not found or not permitted to update' })
 	async update(@Request() req, @Param('id') id: string, @Body() updateDiaryDto: DiaryUpdateDto) {
+		const maxImages = req.membership
+			? MEMBERSHIP_LIMITS.DIARY_IMAGES.PREMIUM
+			: MEMBERSHIP_LIMITS.DIARY_IMAGES.FREE;
+
+		if (updateDiaryDto.imageBox && updateDiaryDto.imageBox.length > maxImages) {
+			throw new PaymentRequiredException(
+				`무료 사용자는 최대 ${MEMBERSHIP_LIMITS.DIARY_IMAGES.FREE}장까지 업로드 가능합니다. 멤버십 가입 시 ${MEMBERSHIP_LIMITS.DIARY_IMAGES.PREMIUM}장까지 가능합니다.`
+			);
+		}
+
 		return this.diaryService.update(req.user.id, id, updateDiaryDto);
 	}
 

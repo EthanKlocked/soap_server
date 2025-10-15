@@ -12,8 +12,16 @@ import {
 import { FriendService } from './friend.service';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
+import { MembershipGuard } from '@src/membership/guard/membership.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiSecurity } from '@nestjs/swagger';
 import { FriendRequestDto } from '@src/friend/dto/friend.request.dto';
+import {
+	MEMBERSHIP_LIMITS,
+	THROTTLE_FEATURES,
+	THROTTLE_TTL
+} from '@src/membership/membership.constants';
+import { ThrottleService } from '@src/throttle/throttle.service';
+import { PaymentRequiredException } from '@src/membership/exception/payment-required.exception';
 
 @UseGuards(ApiGuard, JwtAuthGuard)
 @Controller('friend')
@@ -25,7 +33,10 @@ import { FriendRequestDto } from '@src/friend/dto/friend.request.dto';
 @ApiResponse({ status: 410, description: 'Token has expired' })
 @ApiResponse({ status: 500, description: 'Server Error' })
 export class FriendController {
-	constructor(private readonly friendService: FriendService) {}
+	constructor(
+		private readonly friendService: FriendService,
+		private readonly throttleService: ThrottleService
+	) {}
 
 	@ApiTags('Friend-Management')
 	@Get('list')
@@ -51,6 +62,7 @@ export class FriendController {
 	}
 
 	@ApiTags('Friend-Requests')
+	@UseGuards(MembershipGuard)
 	@Post('request')
 	@ApiOperation({
 		summary: 'Send a friend request',
@@ -58,6 +70,7 @@ export class FriendController {
 	})
 	@ApiResponse({ status: 201, description: 'Success' })
 	@ApiResponse({ status: 400, description: 'Self request error / invalid id format' })
+	@ApiResponse({ status: 402, description: 'Membership required' })
 	@ApiResponse({ status: 404, description: 'Receiver user not found' })
 	@ApiResponse({
 		status: 409,
@@ -65,8 +78,43 @@ export class FriendController {
 	})
 	@ApiResponse({ status: 422, description: 'Already are friend' })
 	async sendFriendRequest(@Request() req, @Body() sendFriendRequestDto: FriendRequestDto) {
+		const maxCalls = req.membership
+			? MEMBERSHIP_LIMITS.FRIEND_REQUEST.PREMIUM
+			: MEMBERSHIP_LIMITS.FRIEND_REQUEST.FREE;
+
+		// 1. 제한 체크만 먼저
+		if (maxCalls !== null) {
+			const canCall = await this.throttleService.checkLimit(
+				req.user.id,
+				THROTTLE_FEATURES.FRIEND_REQUEST,
+				maxCalls
+			);
+
+			if (!canCall) {
+				const remainingHours = await this.throttleService.getRemainingHours(
+					req.user.id,
+					THROTTLE_FEATURES.FRIEND_REQUEST
+				);
+				throw new PaymentRequiredException(
+					`일일 이용 한도(${maxCalls}회)를 초과했습니다. ${remainingHours}시간 후 초기화됩니다.`
+				);
+			}
+		}
+
+		// 2. 친구 신청 (비즈니스 로직 검증)
 		const { receiverId, message } = sendFriendRequestDto;
-		return this.friendService.sendFriendRequest(req.user.id, receiverId, message);
+		const result = await this.friendService.sendFriendRequest(req.user.id, receiverId, message);
+
+		// 3. 성공하면 카운트 증가
+		if (maxCalls !== null) {
+			await this.throttleService.increment(
+				req.user.id,
+				THROTTLE_FEATURES.FRIEND_REQUEST,
+				THROTTLE_TTL
+			);
+		}
+
+		return result;
 	}
 
 	@ApiTags('Friend-Requests')
