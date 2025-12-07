@@ -25,7 +25,7 @@ async function bootstrap() {
 		preflightContinue: false,
 		optionsSuccessStatus: 204,
 		credentials: true,
-		allowedHeaders: 'Content-Type, Accept, Authorization, x-access-token, x-refresh-token'
+		allowedHeaders: 'Content-Type, Accept, Authorization, x-access-token, x-refresh-token, x-api-key'
 	});
 
 	app.use(json({ limit: '50mb' }));
