@@ -10,15 +10,17 @@ async function bootstrap() {
 	const app = await NestFactory.create(AppModule);
 
 	app.enableCors({
-		origin: [
-			'http://localhost:5173',
-			'http://192.168.35.247:5173',
-			'http://192.168.35.192:5173',
-			'http://192.168.35.6:5173',
-			'http://192.168.0.55:5173',
-			'http://172.30.1.48:5173',
-			'https://soaf-web.vercel.app'
-		],
+		origin: true, // 모든 origin 허용
+		// origin: [
+		// 	'http://localhost:5173',
+		// 	'http://192.168.35.247:5173',
+		// 	'http://192.168.35.192:5173',
+		// 	'http://192.168.35.6:5173',
+		// 	'http://192.168.35.55:5173',
+		// 	'http://192.168.0.55:5173',
+		// 	'http://172.30.1.48:5173',
+		// 	'https://soaf-web.vercel.app'
+		// ],
 		methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
 		preflightContinue: false,
 		optionsSuccessStatus: 204,
