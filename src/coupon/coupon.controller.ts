@@ -32,11 +32,14 @@ import { CouponRegisterDto } from './dto/coupon.register.dto';
 export class CouponController {
 	constructor(private readonly couponService: CouponService) {}
 
+	// TODO: 추후 관리자 인증 시스템 구축 후 JwtAuthGuard 복구 필요
+	// 현재는 테스트를 위해 API Key만 체크
 	@Post('create')
+	@UseGuards(ApiGuard)
 	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({
 		summary: '쿠폰 생성 (관리자용)',
-		description: '새로운 쿠폰을 생성합니다. 관리자 권한이 필요합니다.'
+		description: '새로운 쿠폰을 생성합니다. 현재는 API 키만 필요합니다. (추후 관리자 인증 추가 예정)'
 	})
 	@ApiBody({ type: CouponCreateDto })
 	@ApiResponse({
