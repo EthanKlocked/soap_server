@@ -36,7 +36,20 @@ export class CouponController {
 	@HttpCode(HttpStatus.CREATED)
 	@ApiOperation({
 		summary: '쿠폰 생성 (관리자용)',
-		description: '새로운 쿠폰을 생성합니다. 관리자 권한이 필요합니다.'
+		description: `새로운 쿠폰을 생성합니다. 관리자 권한이 필요합니다.
+
+📋 **쿠폰 생성 규칙**
+• 쿠폰 코드는 자동으로 12자리 형식(XXXX-XXXX-XXXX)으로 생성됩니다
+• 모든 파라미터는 선택사항이며, 미입력 시 기본값이 적용됩니다
+
+📅 **기본값 정보**
+• validUntil (등록 마감일): 생성 시점으로부터 1년 후
+• expiredDate (멤버십 만료일): 생성 시점으로부터 30일 후
+• membershipDuration: 설정 시 expiredDate보다 우선 적용됨
+
+💡 **추천 사용법**
+고정 기간 멤버십 제공 시 membershipDuration 사용을 권장합니다
+(예: 90일 멤버십 → membershipDuration: 90)`
 	})
 	@ApiBody({ type: CouponCreateDto })
 	@ApiResponse({
