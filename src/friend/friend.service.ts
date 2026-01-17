@@ -51,7 +51,7 @@ export class FriendService {
 		}
 	}
 
-	private async sendFriendRequestPush(receiverId: string, sender: User, requestId: string) {
+	private async sendFriendRequestPush(receiverId: string) {
 		try {
 			const receiver = await this.userModel.findOne({ _id: receiverId });
 			if (!receiver) {
@@ -136,10 +136,9 @@ export class FriendService {
 			});
 
 			const savedRequest = await newRequest.save();
-			const sender = await this.userService.findById(senderId);
 
-			this.sendFriendRequestPush(receiverId, sender, savedRequest._id.toString()).catch(
-				error => this.logger.error('Background push notification failed:', error)
+			this.sendFriendRequestPush(receiverId).catch(error =>
+				this.logger.error('Background push notification failed:', error)
 			);
 
 			return savedRequest;

@@ -48,7 +48,7 @@ export class AuthService {
 		// throw new UnauthorizedException('invalid token');
 
 		const user = await this.userService.findOne({ email: body.email });
-		let result: SnsValidationResult = {
+		const result: SnsValidationResult = {
 			resultCase: SnsValidationResultCase.READY,
 			resultValue: ''
 		};

@@ -3,7 +3,8 @@ import {
 	InternalServerErrorException,
 	NotFoundException,
 	HttpException,
-	ConflictException
+	ConflictException,
+	Logger
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -23,6 +24,7 @@ import { FileManagerService } from '@src/file-manager/file-manager.service';
 
 @Injectable()
 export class DiaryService {
+	private readonly logger = new Logger(DiaryService.name);
 	private readonly aiServiceUrl: string;
 	private readonly apiSecret: string; // secret key for using ai service
 
@@ -55,7 +57,7 @@ export class DiaryService {
 			});
 			return createdDiary;
 		} catch (e) {
-			console.log(e);
+			this.logger.error('Failed to create diary', e);
 			throw new InternalServerErrorException(
 				'An unexpected error occurred while creating the diary'
 			);

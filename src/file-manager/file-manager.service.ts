@@ -1,4 +1,9 @@
-import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+	Injectable,
+	InternalServerErrorException,
+	NotFoundException,
+	Logger
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import {
 	S3Client,
@@ -12,6 +17,7 @@ import { PresignedUrlResponse } from '@src/file-manager/file-manager.interface';
 
 @Injectable()
 export class FileManagerService {
+	private readonly logger = new Logger(FileManagerService.name);
 	private readonly s3Client: S3Client;
 	private readonly bucketName: string;
 	private readonly s3Region: string;
@@ -40,7 +46,7 @@ export class FileManagerService {
 				fileUrl: `https://${this.bucketName}.s3.${this.s3Region}.amazonaws.com/${key}`
 			};
 		} catch (error) {
-			console.error('Error generating presigned URL:', error);
+			this.logger.error('Error generating presigned URL:', error);
 			throw new InternalServerErrorException('Failed to generate presigned URL');
 		}
 	}

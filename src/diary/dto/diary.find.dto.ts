@@ -1,8 +1,27 @@
-import { IsInt, IsOptional, IsPositive, Min, Max, IsBoolean } from 'class-validator';
+import {
+	IsInt,
+	IsOptional,
+	IsPositive,
+	Min,
+	Max,
+	IsBoolean,
+	ValidatorConstraint,
+	ValidatorConstraintInterface,
+	Validate
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
-const FUTURE_YEAR_BUFFER = 5;
+@ValidatorConstraint({ name: 'maxCurrentYear' })
+export class MaxCurrentYearConstraint implements ValidatorConstraintInterface {
+	validate(year: number): boolean {
+		return year === undefined || year === null || year <= new Date().getFullYear();
+	}
+
+	defaultMessage(): string {
+		return `year must not be greater than ${new Date().getFullYear()}`;
+	}
+}
 
 export class DiaryFindDto {
 	@ApiProperty({
@@ -33,13 +52,12 @@ export class DiaryFindDto {
 		example: 2023,
 		description: '조회할 연도',
 		minimum: 2000,
-		maximum: new Date().getFullYear() + FUTURE_YEAR_BUFFER,
 		required: false
 	})
 	@IsOptional()
 	@IsInt()
 	@Min(2000)
-	@Max(new Date().getFullYear())
+	@Validate(MaxCurrentYearConstraint)
 	@Type(() => Number)
 	year?: number;
 

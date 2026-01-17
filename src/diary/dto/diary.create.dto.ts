@@ -24,7 +24,7 @@ import {
 
 @ValidatorConstraint({ name: 'isValidEmotion', async: false })
 export class IsValidEmotion implements ValidatorConstraintInterface {
-	validate(emotion: string, args: ValidationArguments) {
+	validate(emotion: string) {
 		return validEmotionList.includes(emotion as ValidEmotion);
 	}
 
