@@ -1,8 +1,8 @@
 // null = 무제한
 export const MEMBERSHIP_LIMITS = {
 	DIARY_IMAGES: {
-		FREE: 1,
-		PREMIUM: 5
+		FREE: 5,
+		PREMIUM: 10
 	},
 	FRIEND_REQUEST: {
 		FREE: 5,
