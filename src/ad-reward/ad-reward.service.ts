@@ -48,6 +48,8 @@ export class AdRewardService {
 
 	// SSV 웹훅 처리
 	async verifyAndReward(params: AdmobSsvParams, rawQuery: string): Promise<{ success: boolean }> {
+		this.logger.log(`[SSV Callback] params=${JSON.stringify(params)}`);
+
 		// 1. SSV 서명 검증
 		const ssvEnabled =
 			this.configService.get('ADMOB_SSV_VERIFICATION_ENABLED') !== 'false';
@@ -72,12 +74,14 @@ export class AdRewardService {
 		const txnKey = `ad_txn:${params.transaction_id}`;
 		const existing = await this.cacheManager.get(txnKey);
 		if (existing) {
+			this.logger.log(`[SSV Callback] 중복 트랜잭션 txn=${params.transaction_id}`);
 			return { success: true }; // 멱등: 이미 처리됨
 		}
 
 		// 4. 보너스 증가
 		const maxBonus = this.getMaxBonus(feature);
 		const granted = await this.throttleService.incrementBonus(userId, feature, maxBonus);
+		this.logger.log(`[SSV Callback] userId=${userId} feature=${feature} granted=${granted} maxBonus=${maxBonus}`);
 
 		// 5. 트랜잭션 처리 완료 마킹
 		const store = this.cacheManager.store as any;
