@@ -50,7 +50,6 @@ export class AdRewardService {
 	async verifyAndReward(params: AdmobSsvParams, rawQuery: string): Promise<{ success: boolean }> {
 		// 1. SSV 서명 검증
 		const ssvEnabled =
-			process.env.NODE_ENV === 'production' ||
 			this.configService.get('ADMOB_SSV_VERIFICATION_ENABLED') !== 'false';
 		if (ssvEnabled) {
 			const isValid = await this.verifySsvSignature(params, rawQuery);

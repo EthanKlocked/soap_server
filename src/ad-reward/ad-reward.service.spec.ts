@@ -190,8 +190,8 @@ describe('AdRewardService', () => {
 			);
 		});
 
-		it('프로덕션에서는 SSV가 항상 활성화된다', async () => {
-			process.env.NODE_ENV = 'production';
+		it('SSV 환경변수 미설정 시 검증이 활성화된다', async () => {
+			mockConfigService.get.mockReturnValue(undefined); // 환경변수 없음
 			mockCacheManager.get.mockResolvedValue(null);
 
 			// verifySsvSignature가 실패하면 UnauthorizedException
