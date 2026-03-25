@@ -5,6 +5,7 @@ import { CategoryType } from './schema/my-home.schema';
 import { PaginationQueryDto } from './dto/pagination.dto';
 import { JwtAuthGuard } from '@src/auth/guard/jwt.guard';
 import { ApiGuard } from '@src/auth/guard/api.guard';
+import { MembershipGuard } from '@src/membership/guard/membership.guard';
 
 describe('MyHomeController', () => {
 	let controller: MyHomeController;
@@ -62,6 +63,8 @@ describe('MyHomeController', () => {
 			.overrideGuard(JwtAuthGuard)
 			.useValue({ canActivate: jest.fn(() => true) })
 			.overrideGuard(ApiGuard)
+			.useValue({ canActivate: jest.fn(() => true) })
+			.overrideGuard(MembershipGuard)
 			.useValue({ canActivate: jest.fn(() => true) })
 			.compile();
 

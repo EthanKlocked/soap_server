@@ -17,6 +17,7 @@ import { PushModule } from './push/push.module';
 import { FileManagerModule } from './file-manager/file-manager.module';
 import { MembershipModule } from './membership/membership.module';
 import { CouponModule } from './coupon/coupon.module';
+import { AdRewardModule } from './ad-reward/ad-reward.module';
 
 @Module({
 	imports: [
@@ -41,7 +42,8 @@ import { CouponModule } from './coupon/coupon.module';
 		PushModule,
 		FileManagerModule,
 		MembershipModule,
-		CouponModule
+		CouponModule,
+		AdRewardModule
 	],
 	controllers: [AppController],
 	providers: [AppService]

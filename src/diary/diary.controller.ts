@@ -32,11 +32,7 @@ import { DiaryAnalysisService } from '@src/diary/diaryAnalysis.service';
 import { DiaryStatsDto } from '@src/diary/dto/diary.stats.dto';
 import { DiaryReportDto } from '@src/diary/dto/diary.report.dto';
 import { ReactionType } from '@src/diary/diary.interface';
-import {
-	MEMBERSHIP_LIMITS,
-	THROTTLE_FEATURES,
-	THROTTLE_TTL
-} from '@src/membership/membership.constants';
+import { MEMBERSHIP_LIMITS, THROTTLE_FEATURES } from '@src/membership/membership.constants';
 import { ThrottleService } from '@src/throttle/throttle.service';
 import { PaymentRequiredException } from '@src/membership/exception/payment-required.exception';
 
@@ -95,8 +91,7 @@ export class DiaryController {
 			await this.throttleService.checkAndIncrement(
 				req.user.id,
 				THROTTLE_FEATURES.AI_MATCHING,
-				maxCalls,
-				THROTTLE_TTL
+				maxCalls
 			);
 		}
 

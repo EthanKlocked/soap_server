@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -8,15 +9,21 @@ describe('AppController', () => {
 	beforeEach(async () => {
 		const app: TestingModule = await Test.createTestingModule({
 			controllers: [AppController],
-			providers: [AppService]
+			providers: [
+				AppService,
+				{
+					provide: ConfigService,
+					useValue: { get: jest.fn().mockReturnValue('SOAP') }
+				}
+			]
 		}).compile();
 
 		appController = app.get<AppController>(AppController);
 	});
 
 	describe('root', () => {
-		it('should return "Hello World!"', () => {
-			expect(appController.home()).toBe('Hello World!');
+		it('should return welcome message', () => {
+			expect(appController.home()).toBe('Welcome to my SOAP!');
 		});
 	});
 });

@@ -17,7 +17,7 @@ import { UserUpdateDto } from '@src/user/dto/user.update.dto';
 import { Cache } from 'cache-manager';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { generateRandomNumber } from '@src/lib/common';
-import { EmailService } from 'src/email/email.service';
+import { EmailService } from '@src/email/email.service';
 import { EmailRequestDto } from '@src/email/dto/email.request.dto';
 import { UserVerifyDto } from '@src/user/dto/user.verify.dto';
 import { UserBlockDto } from '@src/user/dto/user.block.dto';

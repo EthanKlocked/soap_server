@@ -15,11 +15,7 @@ import { ApiGuard } from '@src/auth/guard/api.guard';
 import { MembershipGuard } from '@src/membership/guard/membership.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiSecurity } from '@nestjs/swagger';
 import { FriendRequestDto } from '@src/friend/dto/friend.request.dto';
-import {
-	MEMBERSHIP_LIMITS,
-	THROTTLE_FEATURES,
-	THROTTLE_TTL
-} from '@src/membership/membership.constants';
+import { MEMBERSHIP_LIMITS, THROTTLE_FEATURES } from '@src/membership/membership.constants';
 import { ThrottleService } from '@src/throttle/throttle.service';
 import { PaymentRequiredException } from '@src/membership/exception/payment-required.exception';
 
@@ -91,12 +87,17 @@ export class FriendController {
 			);
 
 			if (!canCall) {
+				const effectiveLimit = await this.throttleService.getEffectiveLimit(
+					req.user.id,
+					THROTTLE_FEATURES.FRIEND_REQUEST,
+					maxCalls
+				);
 				const remainingHours = await this.throttleService.getRemainingHours(
 					req.user.id,
 					THROTTLE_FEATURES.FRIEND_REQUEST
 				);
 				throw new PaymentRequiredException(
-					`일일 이용 한도(${maxCalls}회)를 초과했습니다. ${remainingHours}시간 후 초기화됩니다.`
+					`일일 이용 한도(${effectiveLimit}회)를 초과했습니다. ${remainingHours}시간 후 초기화됩니다.`
 				);
 			}
 		}
@@ -107,11 +108,7 @@ export class FriendController {
 
 		// 3. 성공하면 카운트 증가
 		if (maxCalls !== null) {
-			await this.throttleService.increment(
-				req.user.id,
-				THROTTLE_FEATURES.FRIEND_REQUEST,
-				THROTTLE_TTL
-			);
+			await this.throttleService.increment(req.user.id, THROTTLE_FEATURES.FRIEND_REQUEST);
 		}
 
 		return result;
